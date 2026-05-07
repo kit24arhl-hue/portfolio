@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  font-family: 'Satoshi', system-ui, sans-serif;
+  background-color: #020308;
+  color: #f8fafc;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.03), transparent 40%),
+    linear-gradient(180deg, #020308 0%, #050505 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.hero-canvas {
+  filter: saturate(1.25);
+}
+
+.hero-overlay {
+  background: radial-gradient(circle, transparent 50%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+@keyframes slide-horizontal {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-slide-horizontal {
+  animation: slide-horizontal 28s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 22s linear infinite;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-delayed {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
+
+.animate-fade-in-delayed {
+  animation: fade-in-delayed 0.8s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+@keyframes music-bar-1 {
+
+  0%,
+  100% {
+    height: 4px;
+  }
+
+  50% {
+    height: 20px;
+  }
+}
+
+@keyframes music-bar-2 {
+
+  0%,
+  100% {
+    height: 8px;
+  }
+
+  50% {
+    height: 28px;
+  }
+}
+
+@keyframes music-bar-3 {
+
+  0%,
+  100% {
+    height: 12px;
+  }
+
+  50% {
+    height: 24px;
+  }
+}
+
+.animate-music-bar-1 {
+  animation: music-bar-1 0.6s ease-in-out infinite;
+}
+
+.animate-music-bar-2 {
+  animation: music-bar-2 0.7s ease-in-out infinite;
+}
+
+.animate-music-bar-3 {
+  animation: music-bar-3 0.5s ease-in-out infinite;
+}
+
+.glass-card {
+  @apply bg-white/5 border border-white/10 backdrop-blur-md shadow-glow;
+}
+
+.card-hidden {
+  opacity: 0;
+  transform: translateY(32px);
+}
+
+/* ── Skills Marquee ── */
+.skills-text {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(148, 163, 184, 0.35);
+  text-stroke: 1.5px rgba(148, 163, 184, 0.35);
+  line-height: 1.1;
+  transition: -webkit-text-stroke-color 0.3s ease, color 0.3s ease;
+}
+
+.skills-text:hover {
+  -webkit-text-stroke-color: rgba(56, 189, 248, 0.7);
+  color: rgba(56, 189, 248, 0.08);
+}
+
+@keyframes skills-scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes skills-scroll-right {
+  0% {
+    transform: translateX(-50%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.skills-track--left {
+  animation: skills-scroll-left 30s linear infinite;
+}
+
+.skills-track--right {
+  animation: skills-scroll-right 25s linear infinite;
+}
+
+.skills-marquee-section:hover .skills-track--left,
+.skills-marquee-section:hover .skills-track--right {
+  animation-play-state: paused;
+}

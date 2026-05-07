@@ -1,0 +1,2272 @@
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  FormEvent,
+  MouseEvent,
+  ReactNode,
+} from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
+
+const FRAME_COUNT = 120;
+const INITIAL_BATCH = 30;
+const BATCH_SIZE = 30;
+const FRAME_PATH = "/frames/frame_";
+const FRAME_EXT = ".webp";
+
+const PROFILE_FRAME_COUNT = 198;
+const PROFILE_FRAME_PATH = "/profile/ezgif-frame-";
+const PROFILE_FRAME_EXT = ".jpg";
+
+interface TechItem {
+  id: string;
+  name: string;
+  icon: string;
+  category: string;
+}
+
+interface Project {
+  id: string;
+  title: string;
+  category: string;
+  year: string;
+  description: string;
+  image: string;
+  techStack: string[];
+  hostedLink: string;
+  sourceLink: string;
+}
+
+const INITIAL_PROJECTS: Project[] = [
+  {
+    id: "1",
+    title: "Agentic Drone Surveillance",
+    category: "AI / COMPUTER VISION",
+    year: "2024",
+    description:
+      "An agentic AI—powered drone surveillance system that uses real-time object detection with YOLOv8 and Vision Language Models for intelligent monitoring.",
+    image: "/ai_tools/groq_logo.webp",
+    techStack: ["LangChain", "YOLOv8", "Django", "React", "Groq", "VLM"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "2",
+    title: "OpenClaw",
+    category: "AGENTIC AI",
+    year: "2024",
+    description:
+      "An agentic AI system integrated with WhatsApp, featuring persistent memory and real-time contextual reasoning powered by advanced LLMs.",
+    image: "/ai_tools/antigravity.webp",
+    techStack: ["Antigravity", "WhatsApp", "Agentic AI", "LLM"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "3",
+    title: "EcoVision AI",
+    category: "SUSTAINABILITY",
+    year: "2024",
+    description:
+      "AI-powered waste classification and recycling assistant using real-time camera feed to identify and sort recyclables.",
+    image: "/ai_tools/ollama-icon.webp",
+    techStack: ["PyTorch", "OpenCV", "FastAPI"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "4",
+    title: "Neural Synth",
+    category: "AUDIO AI",
+    year: "2024",
+    description:
+      "Generative music system that creates ambient soundscapes based on user emotional input via webcam analysis.",
+    image: "/ai_tools/spline_logo.webp",
+    techStack: ["Python", "Librosa", "TensorFlow"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "5",
+    title: "Sentiment Sphere",
+    category: "NLP",
+    year: "2024",
+    description:
+      "Real-time social media sentiment analysis dashboard with interactive 3D visualization of global mood trends.",
+    image: "/ai_tools/cloudflare-color.webp",
+    techStack: ["React", "Transformers", "D3.js"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "6",
+    title: "AeroDrone AI",
+    category: "ROBOTICS",
+    year: "2023",
+    description:
+      "Autonomous drone navigation system using deep reinforcement learning for complex obstacle avoidance in urban environments.",
+    image: "/ai_tools/azure-color.webp",
+    techStack: ["C++", "PyTorch", "ROS"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "7",
+    title: "Quantum Ledger",
+    category: "FINTECH",
+    year: "2023",
+    description:
+      "AI-enhanced blockchain explorer that predicts market volatility and detects fraudulent transaction patterns in real-time.",
+    image: "/ai_tools/aws-color.webp",
+    techStack: ["Go", "Node.js", "Scikit-learn"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "8",
+    title: "BioSynth Pro",
+    category: "BIO-TECH",
+    year: "2023",
+    description:
+      "Deep learning platform for protein folding prediction, helping researchers visualize complex molecular structures with high accuracy.",
+    image: "/ai_tools/pngwing.com.png",
+    techStack: ["Python", "AlphaFold", "WebGL"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "9",
+    title: "Solaris Optimizer",
+    category: "GREEN TECH",
+    year: "2024",
+    description:
+      "AI for smart grid management, optimizing renewable energy distribution based on real-time weather and consumption patterns.",
+    image:
+      "https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?q=80&w=2000&auto=format&fit=crop",
+    techStack: ["Python", "LSTM", "InfluxDB"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "10",
+    title: "Visionary AR",
+    category: "AR / VR",
+    year: "2024",
+    description:
+      "Augmented reality interior design tool using spatial mapping and AI-driven furniture placement for immersive home planning.",
+    image:
+      "https://images.unsplash.com/photo-1633177317976-3f9bc45e1d1d?q=80&w=2000&auto=format&fit=crop",
+    techStack: ["Unity", "ARKit", "TensorFlow Lite"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "11",
+    title: "Nexus Guard",
+    category: "CYBERSECURITY",
+    year: "2023",
+    description:
+      "Threat detection platform using behavioral AI to identify zero-day vulnerabilities and autonomous network defense responses.",
+    image:
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2000&auto=format&fit=crop",
+    techStack: ["Rust", "Scikit-learn", "Kafka"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+  {
+    id: "12",
+    title: "Deep Voice AI",
+    category: "AUDIO AI",
+    year: "2023",
+    description:
+      "Real-time voice cloning and translation system that preserves emotional nuance and speaker characteristics across languages.",
+    image:
+      "https://images.unsplash.com/photo-1589254065878-42c9da997008?q=80&w=2000&auto=format&fit=crop",
+    techStack: ["Python", "PyTorch", "FastAPI"],
+    hostedLink: "#",
+    sourceLink: "#",
+  },
+];
+
+const INITIAL_TECHS: TechItem[] = [
+  {
+    id: "1",
+    name: "Azure",
+    icon: "/ai_tools/azure-color.webp",
+    category: "CLOUD",
+  },
+  {
+    id: "2",
+    name: "Django",
+    icon: "/tech_stack/django.png",
+    category: "BACKEND",
+  },
+  {
+    id: "3",
+    name: "Flask",
+    icon: "/tech_stack/flask.png",
+    category: "BACKEND",
+  },
+  { id: "4", name: "GitHub", icon: "/ai_tools/github.webp", category: "TOOLS" },
+  {
+    id: "5",
+    name: "JavaScript",
+    icon: "/tech_stack/javascript.png",
+    category: "FRONTEND",
+  },
+  {
+    id: "6",
+    name: "LangGraph",
+    icon: "/tech_stack/langgraph.webp",
+    category: "AI CORE",
+  },
+  {
+    id: "7",
+    name: "Node.js",
+    icon: "/tech_stack/node-js.png",
+    category: "BACKEND",
+  },
+  {
+    id: "8",
+    name: "PostgreSQL",
+    icon: "/tech_stack/postgresql.png",
+    category: "DATABASE",
+  },
+  {
+    id: "9",
+    name: "Python",
+    icon: "/tech_stack/python.png",
+    category: "LANGUAGE",
+  },
+  {
+    id: "10",
+    name: "Tailwind CSS",
+    icon: "/tech_stack/tailwind-css.png",
+    category: "STYLING",
+  },
+  {
+    id: "11",
+    name: "TensorFlow",
+    icon: "/tech_stack/tensorflow.png",
+    category: "AI CORE",
+  },
+  {
+    id: "12",
+    name: "AWS",
+    icon: "/ai_tools/aws-color.webp",
+    category: "CLOUD",
+  },
+  {
+    id: "13",
+    name: "Groq",
+    icon: "/ai_tools/groq_logo.webp",
+    category: "AI CORE",
+  },
+  {
+    id: "14",
+    name: "Ollama",
+    icon: "/ai_tools/ollama-icon.webp",
+    category: "AI CORE",
+  },
+  {
+    id: "15",
+    name: "Antigravity",
+    icon: "/ai_tools/antigravity.webp",
+    category: "AI CORE",
+  },
+  {
+    id: "16",
+    name: "Cloudflare",
+    icon: "/ai_tools/cloudflare-color.webp",
+    category: "INFRA",
+  },
+  {
+    id: "17",
+    name: "Spline",
+    icon: "/ai_tools/spline_logo.webp",
+    category: "DESIGN",
+  },
+];
+
+function useTechStack() {
+  const [techs, setTechs] = useState<TechItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("portfolio_techs");
+      return saved ? JSON.parse(saved) : INITIAL_TECHS;
+    } catch (e) {
+      console.error("Failed to parse techs from localStorage", e);
+      return INITIAL_TECHS;
+    }
+  });
+
+  const saveTechs = (newTechs: TechItem[]) => {
+    setTechs(newTechs);
+    localStorage.setItem("portfolio_techs", JSON.stringify(newTechs));
+  };
+
+  const addTech = (tech: Omit<TechItem, "id">) => {
+    const newTech = { ...tech, id: Date.now().toString() };
+    saveTechs([...techs, newTech]);
+  };
+
+  const updateTech = (id: string, updatedTech: Partial<TechItem>) => {
+    saveTechs(techs.map((t) => (t.id === id ? { ...t, ...updatedTech } : t)));
+  };
+
+  const deleteTech = (id: string) => {
+    saveTechs(techs.filter((t) => t.id !== id));
+  };
+
+  const resetTechs = () => {
+    saveTechs(INITIAL_TECHS);
+  };
+
+  return { techs, addTech, updateTech, deleteTech, resetTechs };
+}
+
+function useProjects() {
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("portfolio-projects");
+      if (saved) {
+        setProjects(JSON.parse(saved));
+      } else {
+        localStorage.setItem(
+          "portfolio-projects",
+          JSON.stringify(INITIAL_PROJECTS),
+        );
+        setProjects(INITIAL_PROJECTS);
+      }
+    } catch (err) {
+      console.error("Failed to load projects:", err);
+      setProjects(INITIAL_PROJECTS);
+    }
+  }, []);
+
+  const saveProjects = (newProjects: Project[]) => {
+    localStorage.setItem("portfolio-projects", JSON.stringify(newProjects));
+    setProjects(newProjects);
+  };
+
+  const addProject = (project: Omit<Project, "id">) => {
+    const newProject = { ...project, id: Date.now().toString() };
+    saveProjects([...projects, newProject]);
+  };
+
+  const updateProject = (updated: Project) => {
+    saveProjects(projects.map((p) => (p.id === updated.id ? updated : p)));
+  };
+
+  const deleteProject = (id: string) => {
+    saveProjects(projects.filter((p) => p.id !== id));
+  };
+
+  const resetProjects = () => {
+    saveProjects(INITIAL_PROJECTS);
+  };
+
+  return { projects, addProject, updateProject, deleteProject, resetProjects };
+}
+
+function SelectedWorks() {
+  const { projects } = useProjects();
+  const navigate = useNavigate();
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sectionRef.current || !scrollContainerRef.current) return;
+
+    const scrollWidth = scrollContainerRef.current.scrollWidth;
+    const windowWidth = window.innerWidth;
+    const amountToScroll = scrollWidth - windowWidth;
+
+    const ctx = gsap.context(() => {
+      gsap.to(scrollContainerRef.current, {
+        x: -amountToScroll,
+        ease: "none",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: `+=${amountToScroll * 0.5}`,
+          pin: true,
+          scrub: 0.3,
+          invalidateOnRefresh: true,
+        },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [projects]);
+
+  const displayProjects = projects.slice(0, 6);
+
+  return (
+    <section
+      ref={sectionRef}
+      className="bg-[#020308] overflow-hidden h-screen flex flex-col justify-center"
+    >
+      <div className="px-6 md:px-12 mb-8">
+        <h2 className="text-[10px] uppercase tracking-[0.8em] text-sky-400 font-black mb-2">
+          Project
+        </h2>
+        <div className="h-px w-24 bg-gradient-to-r from-sky-500 to-transparent" />
+      </div>
+
+      <div className="relative">
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-8 px-6 md:px-12"
+          style={{ width: "fit-content" }}
+        >
+          {displayProjects.map((project) => (
+            <div key={project.id} className="w-[300px] md:w-[400px] shrink-0">
+              <TiltCard className="glass-card group overflow-hidden rounded-[2rem] border border-white/10 transition-all duration-500 hover:border-sky-500/50">
+                <div className="relative h-56 md:h-64 overflow-hidden">
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80" />
+
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-bold text-sky-400 uppercase tracking-widest">
+                      {project.category}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 md:p-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl md:text-2xl font-black text-white tracking-tight">
+                      {project.title}
+                    </h3>
+                    <span className="text-[10px] font-bold text-slate-500 font-mono">
+                      {project.year}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-400 leading-relaxed mb-6 line-clamp-2 min-h-[2.5rem]">
+                    {project.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-8">
+                    {project.techStack?.slice(0, 3).map((tech) => (
+                      <span
+                        key={tech}
+                        className="text-[9px] font-bold text-slate-300 uppercase tracking-wider px-2 py-1 bg-white/5 rounded-md border border-white/5"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                    {(project.techStack?.length || 0) > 3 && (
+                      <span className="text-[9px] font-bold text-sky-400 px-2 py-1 bg-sky-500/10 rounded-md">
+                        +{(project.techStack?.length || 0) - 3}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <a
+                      href={project.hostedLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group/link flex items-center gap-2 text-[10px] font-bold text-sky-400 uppercase tracking-[0.2em] transition-all hover:text-white"
+                    >
+                      <span>Live Site</span>
+                      <svg
+                        className="w-3 h-3 transition-transform group-hover/link:-rotate-45"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M14 5l7 7m0 0l-7 7m7-7H3"
+                        />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </TiltCard>
+            </div>
+          ))}
+
+          {/* View All Button Card */}
+          <div className="w-[300px] md:w-[400px] shrink-0 flex items-center justify-center pr-24">
+            <button
+              onClick={() => navigate("/projects")}
+              className="group relative flex flex-col items-center gap-6"
+            >
+              <div className="w-24 h-24 rounded-full border border-sky-500/30 flex items-center justify-center transition-all duration-500 group-hover:bg-sky-500 group-hover:scale-110 shadow-lg group-hover:shadow-sky-500/20">
+                <svg
+                  className="w-8 h-8 text-sky-400 group-hover:text-slate-950 transition-colors"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
+                </svg>
+              </div>
+              <span className="text-sm font-black text-white uppercase tracking-[0.4em] group-hover:text-sky-400 transition-colors">
+                View All Projects
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProfileAnimatedImage() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const framesRef = useRef<HTMLImageElement[]>([]);
+  const requestRef = useRef<number>();
+  const [ready, setReady] = useState(false);
+
+  const drawFrame = useCallback((index: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas || framesRef.current.length === 0) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const imgIndex = Math.min(
+      Math.max(Math.round(index), 0),
+      PROFILE_FRAME_COUNT - 1,
+    );
+    const img = framesRef.current[imgIndex];
+    if (!img || !img.complete) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+    }
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
+    const aspect = img.width / img.height;
+    const canvasAspect = width / height;
+
+    let drawWidth = width;
+    let drawHeight = height;
+
+    if (canvasAspect > aspect) {
+      drawHeight = width / aspect;
+    } else {
+      drawWidth = height * aspect;
+    }
+
+    const dx = (width - drawWidth) / 2;
+    const dy = (height - drawHeight) / 2;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(img, dx, dy, drawWidth, drawHeight);
+    ctx.restore();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    let loadedCount = 0;
+    const frames: HTMLImageElement[] = [];
+
+    for (let i = 1; i <= PROFILE_FRAME_COUNT; i++) {
+      const img = new Image();
+      img.src = `${PROFILE_FRAME_PATH}${String(i).padStart(3, "0")}${PROFILE_FRAME_EXT}`;
+      img.onload = () => {
+        if (!mounted) return;
+        loadedCount++;
+        if (loadedCount >= Math.min(10, PROFILE_FRAME_COUNT)) {
+          setReady(true);
+        }
+      };
+      img.onerror = () => {
+        if (!mounted) return;
+        loadedCount++;
+        if (loadedCount >= Math.min(10, PROFILE_FRAME_COUNT)) {
+          setReady(true);
+        }
+      };
+      frames.push(img);
+    }
+    framesRef.current = frames;
+
+    let lastTime = 0;
+    const fps = 10;
+    const interval = 1000 / fps;
+    let currentFrame = 0;
+
+    const loop = (time: number) => {
+      if (!mounted) return;
+      if (time - lastTime >= interval) {
+        currentFrame = (currentFrame + 1) % PROFILE_FRAME_COUNT;
+        drawFrame(currentFrame);
+        lastTime = time;
+      }
+      requestRef.current = requestAnimationFrame(loop);
+    };
+
+    requestRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      mounted = false;
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, [drawFrame]);
+
+  // Initial draw and resize
+  useEffect(() => {
+    if (!ready) return;
+    drawFrame(0);
+    const handleResize = () => drawFrame(0);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [ready, drawFrame]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="h-full w-full"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+function TiltCard({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotate, setRotate] = useState({ x: 0, y: 0 });
+  const [glow, setGlow] = useState({ x: 0, y: 0, opacity: 0 });
+
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = (y - centerY) / 15;
+    const rotateY = (centerX - x) / 15;
+    setRotate({ x: rotateX, y: rotateY });
+    setGlow({ x, y, opacity: 1 });
+  };
+
+  const handleMouseLeave = () => {
+    setRotate({ x: 0, y: 0 });
+    setGlow({ ...glow, opacity: 0 });
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={`${className} relative transition-transform duration-200 ease-out`}
+      style={{
+        transform: `perspective(1000px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) scale3d(1.02, 1.02, 1.02)`,
+        transformStyle: "preserve-3d",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(circle at ${glow.x}px ${glow.y}px, rgba(56, 189, 248, 0.15), transparent 60%)`,
+          opacity: glow.opacity,
+        }}
+      />
+      {children}
+    </div>
+  );
+}
+
+function MusicPlayer() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  return (
+    <TiltCard className="glass-card rounded-[1.5rem] p-4 flex flex-col justify-between overflow-hidden">
+      <div className="flex items-center gap-4 relative z-10">
+        <div className="relative group shrink-0">
+          <img
+            src="/best_of_me/The_Weeknd_-_Starboy.png"
+            alt="Starboy"
+            className={`w-16 h-16 rounded-xl object-cover shadow-2xl transition-transform duration-500 ${isPlaying ? "scale-110 rotate-3" : "group-hover:scale-105"}`}
+          />
+          {isPlaying && (
+            <div className="absolute -inset-1 bg-sky-500/20 blur-lg rounded-xl animate-pulse" />
+          )}
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-sky-400 font-bold mb-1">
+            Best of Me
+          </p>
+          <h3 className="text-sm font-black text-white truncate">Starboy</h3>
+          <p className="text-[10px] text-slate-400 truncate">
+            The Weeknd, Daft Punk
+          </p>
+        </div>
+        <button
+          onClick={togglePlay}
+          className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-all duration-300 hover:bg-sky-500 hover:border-sky-400 group shrink-0"
+        >
+          {isPlaying ? (
+            <div className="flex gap-1.5">
+              <div className="w-1.5 h-4 bg-white rounded-full" />
+              <div className="w-1.5 h-4 bg-white rounded-full" />
+            </div>
+          ) : (
+            <div className="ml-1 w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent" />
+          )}
+        </button>
+      </div>
+
+      <div className="mt-4 flex items-end justify-between gap-1 h-6">
+        {Array.from({ length: 15 }).map((_, i) => (
+          <div
+            key={i}
+            className={`w-full bg-sky-500/30 rounded-t-sm transition-all duration-500 ${isPlaying ? `animate-music-bar-${(i % 3) + 1}` : "h-1"}`}
+            style={{
+              animationDelay: `${i * 0.05}s`,
+              opacity: 0.3 + (i / 15) * 0.7,
+            }}
+          />
+        ))}
+      </div>
+      <audio
+        ref={audioRef}
+        src="/best_of_me/The Weeknd, Daft Punk - Starboy.mp3"
+        onEnded={() => setIsPlaying(false)}
+      />
+    </TiltCard>
+  );
+}
+
+function TechStackGrid() {
+  const { techs } = useTechStack();
+  const sectionRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!techs.length || !sectionRef.current || !gridRef.current) return;
+
+    const ctx = gsap.context(() => {
+      const cards = gsap.utils.toArray<HTMLElement>(".tech-card-wrapper");
+      const grid = gridRef.current!;
+      const header = sectionRef.current?.querySelector(".tech-stack-header");
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "+=350%",
+          pin: true,
+          scrub: 1.2,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      // 1. Spread out from stack
+      cards.forEach((card, i) => {
+        const gridRect = grid.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const centerX = gridRect.width / 2;
+        const centerY = gridRect.height / 2;
+        const cardCenterX = cardRect.left - gridRect.left + cardRect.width / 2;
+        const cardCenterY = cardRect.top - gridRect.top + cardRect.height / 2;
+
+        const diffX = centerX - cardCenterX;
+        const diffY = centerY - cardCenterY;
+
+        tl.fromTo(
+          card,
+          {
+            x: diffX,
+            y: diffY,
+            rotation: ((i % 3) - 1) * 10 + Math.sin(i) * 5,
+            scale: 0.7,
+            opacity: 0,
+            zIndex: techs.length - i,
+          },
+          {
+            x: 0,
+            y: 0,
+            rotation: 0,
+            scale: 1,
+            opacity: 1,
+            zIndex: 1,
+            ease: "power2.inOut",
+          },
+          0,
+        );
+      });
+
+      // 2. Fade out header and cards once spread is complete
+      tl.to(
+        [header, ...cards],
+        {
+          opacity: 0,
+          y: (i) => (i === 0 ? -50 : -100), // Move header up slightly less than cards
+          scale: (i) => (i === 0 ? 1 : 0.9),
+          stagger: 0.05,
+          ease: "power2.in",
+        },
+        "+=0.2",
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [techs]);
+
+  return (
+    <section
+      ref={sectionRef}
+      className="bg-[#020308] py-20 px-4 md:px-12 min-h-screen flex flex-col justify-center overflow-hidden"
+    >
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="tech-stack-header text-center mb-16 md:mb-24">
+          <h2 className="text-[10px] uppercase tracking-[0.8em] text-sky-400 font-black mb-2">
+            Tech Stack
+          </h2>
+          <div className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
+        </div>
+
+        <div
+          ref={gridRef}
+          className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-8 relative"
+        >
+          {techs.map((tech, i) => (
+            <div key={tech.id} className="tech-card-wrapper">
+              <TiltCard className="glass-card rounded-[1.5rem] md:rounded-[2.5rem] p-4 md:p-8 flex flex-col items-center justify-center md:justify-between border border-white/5 hover:border-sky-500/50 transition-all duration-500 group cursor-default shadow-2xl h-28 md:h-48 lg:h-56">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-[1.5rem] md:rounded-[2.5rem]" />
+
+                <div className="hidden md:block text-[8px] lg:text-[9px] font-black text-sky-400/60 uppercase tracking-[0.25em] mb-4 group-hover:text-sky-400 transition-colors">
+                  {tech.category}
+                </div>
+
+                <div className="relative w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-1 md:group-hover:-translate-y-2">
+                  <img
+                    src={tech.icon}
+                    alt={tech.name}
+                    className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(56,189,248,0.3)]"
+                  />
+                </div>
+
+                <p className="text-[8px] md:text-[10px] lg:text-xs font-black text-slate-300 uppercase tracking-[0.15em] md:tracking-[0.2em] text-center mt-3 md:mt-6 group-hover:text-white transition-colors truncate w-full">
+                  {tech.name}
+                </p>
+              </TiltCard>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const authToken = sessionStorage.getItem("portfolio-auth");
+  const location = useLocation();
+
+  if (!authToken) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+}
+
+function LoginPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const from =
+    (location.state as { from?: Location })?.from?.pathname ||
+    "/admin/dashboard";
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (
+      email.toLowerCase() === "admin@example.com" &&
+      password === "password123"
+    ) {
+      const token = btoa(`${email}:${Date.now()}`);
+      sessionStorage.setItem("portfolio-auth", token);
+      navigate(from, { replace: true });
+      return;
+    }
+
+    setError(
+      "Login failed. Use admin@example.com / password123 for demo access.",
+    );
+  };
+
+  return (
+    <main className="min-h-screen bg-black px-6 py-16 text-slate-100 md:px-12">
+      <div className="mx-auto max-w-xl space-y-8 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow">
+        <div className="space-y-3">
+          <p className="text-sm uppercase tracking-[0.35em] text-sky-300">
+            Admin Access
+          </p>
+          <h1 className="text-3xl font-semibold text-white">
+            Secure Dashboard Login
+          </h1>
+          <p className="text-slate-400">
+            This demo uses a local session token and protected client-side
+            routes.
+          </p>
+        </div>
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <label className="block text-sm text-slate-200">
+            Email
+            <input
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-sky-400"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              required
+            />
+          </label>
+          <label className="block text-sm text-slate-200">
+            Password
+            <input
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-sky-400"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              required
+            />
+          </label>
+          {error && <p className="text-sm text-rose-300">{error}</p>}
+          <button className="w-full rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:bg-sky-400">
+            Log in
+          </button>
+        </form>
+      </div>
+    </main>
+  );
+}
+
+function TechStackManagement() {
+  const { techs, addTech, updateTech, deleteTech } = useTechStack();
+  const [isAdding, setIsAdding] = useState(false);
+  const [newTech, setNewTech] = useState<Omit<TechItem, "id">>({
+    name: "",
+    icon: "",
+    category: "LANGUAGE",
+  });
+
+  const categories = [
+    "LANGUAGE",
+    "AI CORE",
+    "FRONTEND",
+    "BACKEND",
+    "STYLING",
+    "DATABASE",
+    "TOOLS",
+  ];
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewTech((prev) => ({ ...prev, icon: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = () => {
+    if (newTech.name && newTech.icon) {
+      addTech(newTech);
+      setNewTech({ name: "", icon: "", category: "LANGUAGE" });
+      setIsAdding(false);
+    }
+  };
+
+  return (
+    <DashboardShell title="Tech Stack Management">
+      <div className="space-y-12">
+        {/* Add New Section */}
+        <div className="glass-card p-8 rounded-[2rem] border border-white/10">
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className="flex items-center gap-3 text-sky-400 font-bold uppercase tracking-widest text-sm mb-6"
+          >
+            <span className="w-8 h-8 rounded-full bg-sky-500/10 flex items-center justify-center text-lg">
+              {isAdding ? "−" : "+"}
+            </span>
+            {isAdding ? "Cancel Adding" : "Add New Technology"}
+          </button>
+
+          {isAdding && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Tech Name
+                <input
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400"
+                  value={newTech.name}
+                  onChange={(e) =>
+                    setNewTech({ ...newTech, name: e.target.value })
+                  }
+                  placeholder="e.g. PyTorch"
+                />
+              </label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Category
+                <select
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400"
+                  value={newTech.category}
+                  onChange={(e) =>
+                    setNewTech({ ...newTech, category: e.target.value })
+                  }
+                >
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Icon (File or URL)
+                <div className="mt-2 flex gap-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="tech-icon-upload"
+                  />
+                  <label
+                    htmlFor="tech-icon-upload"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
+                  >
+                    Upload Image
+                  </label>
+                  <input
+                    className="flex-[2] rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400"
+                    value={
+                      newTech.icon.startsWith("data:")
+                        ? "Image Uploaded"
+                        : newTech.icon
+                    }
+                    onChange={(e) =>
+                      setNewTech({ ...newTech, icon: e.target.value })
+                    }
+                    placeholder="or https://..."
+                  />
+                </div>
+              </label>
+              <div className="md:col-span-3 flex justify-end">
+                <button
+                  onClick={handleSave}
+                  className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest hover:bg-sky-400 transition-colors"
+                >
+                  Save Technology
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* List Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {techs.map((tech) => (
+            <div
+              key={tech.id}
+              className="glass-card p-6 rounded-[2rem] border border-white/10 flex items-center gap-6 group"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/5 p-3 flex items-center justify-center group-hover:border-sky-500/30 transition-colors">
+                <img
+                  src={tech.icon}
+                  alt={tech.name}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-[8px] font-black text-sky-400 uppercase tracking-widest mb-1">
+                  {tech.category}
+                </p>
+                <h3 className="text-white font-bold">{tech.name}</h3>
+              </div>
+              <button
+                onClick={() => {
+                  if (window.confirm(`Remove ${tech.name}?`))
+                    deleteTech(tech.id);
+                }}
+                className="w-10 h-10 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500/20"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </DashboardShell>
+  );
+}
+
+function AdminProjects() {
+  const { projects, deleteProject } = useProjects();
+  const navigate = useNavigate();
+
+  return (
+    <DashboardShell title="Projects Manager">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {projects.map((project) => (
+          <div
+            key={project.id}
+            className="glass-card flex flex-col rounded-3xl p-6 border border-white/10"
+          >
+            <img
+              src={project.image}
+              className="h-32 w-full rounded-2xl object-cover mb-4"
+            />
+            <h3 className="font-bold text-white mb-1">{project.title}</h3>
+            <p className="text-xs text-slate-400 mb-6">{project.category}</p>
+            <div className="mt-auto flex gap-2">
+              <button
+                onClick={() => navigate(`/admin/edit-project/${project.id}`)}
+                className="flex-1 rounded-xl bg-white/5 py-2 text-xs font-bold transition hover:bg-white/10"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deleteProject(project.id)}
+                className="flex-1 rounded-xl bg-rose-500/20 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/30"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </DashboardShell>
+  );
+}
+function ProjectForm({
+  initialData,
+  onSubmit,
+}: {
+  initialData?: Project;
+  onSubmit: (data: any) => void;
+}) {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    title: initialData?.title || "",
+    category: initialData?.category || "",
+    year: initialData?.year || new Date().getFullYear().toString(),
+    description: initialData?.description || "",
+    image: initialData?.image || "",
+    techStack: initialData?.techStack?.join(", ") || "",
+    hostedLink: initialData?.hostedLink || "",
+    sourceLink: initialData?.sourceLink || "",
+  });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({ ...prev, image: reader.result as string }));
+      };
+      reader.onerror = () => console.error("File reading failed");
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      techStack: formData.techStack
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s),
+    });
+    navigate("/admin/projects");
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="glass-card rounded-[2rem] p-8 border border-white/10 space-y-6"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+            Title
+            <input
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              required
+            />
+          </label>
+          <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+            Category
+            <input
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+              value={formData.category}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
+              required
+            />
+          </label>
+          <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+            Year
+            <input
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+              value={formData.year}
+              onChange={(e) =>
+                setFormData({ ...formData, year: e.target.value })
+              }
+              required
+            />
+          </label>
+        </div>
+        <div className="space-y-4">
+          <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+            Project Image
+            <div className="mt-2 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-slate-900 border border-white/10 overflow-hidden shrink-0">
+                {formData.image ? (
+                  <img
+                    src={formData.image}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-slate-600">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-sky-500/10 file:text-sky-400 hover:file:bg-sky-500/20 cursor-pointer"
+              />
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1">
+              Or paste a URL below:
+            </p>
+            <input
+              className="mt-1 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-2 text-white outline-none focus:border-sky-400 transition text-sm"
+              value={formData.image}
+              onChange={(e) =>
+                setFormData({ ...formData, image: e.target.value })
+              }
+              placeholder="https://..."
+            />
+          </label>
+          <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+            Tech Stack (comma separated)
+            <input
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+              value={formData.techStack}
+              onChange={(e) =>
+                setFormData({ ...formData, techStack: e.target.value })
+              }
+              placeholder="React, GSAP, Tailwind..."
+            />
+          </label>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Hosted Link
+          <input
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+            value={formData.hostedLink}
+            onChange={(e) =>
+              setFormData({ ...formData, hostedLink: e.target.value })
+            }
+          />
+        </label>
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Source Link
+          <input
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+            value={formData.sourceLink}
+            onChange={(e) =>
+              setFormData({ ...formData, sourceLink: e.target.value })
+            }
+          />
+        </label>
+      </div>
+      <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+        Description
+        <textarea
+          className="mt-2 w-full h-24 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition resize-none"
+          value={formData.description}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+          required
+        />
+      </label>
+      <div className="flex justify-end gap-4 pt-2">
+        <button
+          type="button"
+          onClick={() => navigate("/admin/projects")}
+          className="px-8 py-3 rounded-2xl bg-white/5 font-bold uppercase tracking-widest transition hover:bg-white/10"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400"
+        >
+          {initialData ? "Update Project" : "Create Project"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function AdminAddProject() {
+  const { addProject } = useProjects();
+  return (
+    <DashboardShell title="Add New Project">
+      <ProjectForm onSubmit={addProject} />
+    </DashboardShell>
+  );
+}
+
+function AdminEditProject() {
+  const { id } = useParams();
+  const { projects, updateProject } = useProjects();
+  const project = projects.find((p) => p.id === id);
+
+  if (!project) return null;
+
+  return (
+    <DashboardShell title="Edit Project">
+      <ProjectForm
+        initialData={project}
+        onSubmit={(data) => updateProject({ ...data, id })}
+      />
+    </DashboardShell>
+  );
+}
+
+function DashboardShell({
+  title,
+  children,
+}: {
+  title: string;
+  children?: ReactNode;
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <main className="min-h-screen bg-[#020308] px-6 py-10 text-slate-100 md:px-12">
+      <div className="mx-auto max-w-6xl space-y-8">
+        <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.35em] text-sky-300">
+              Admin area
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold text-white">{title}</h1>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => navigate("/")}
+              className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            >
+              Back to Site
+            </button>
+            <button
+              onClick={() => navigate("/admin/projects")}
+              className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            >
+              Projects
+            </button>
+            <button
+              onClick={() => navigate("/admin/add-project")}
+              className="rounded-2xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+            >
+              Add Project
+            </button>
+          </div>
+        </div>
+        {children}
+      </div>
+    </main>
+  );
+}
+
+function QuickPanel() {
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-10 text-slate-200 md:px-12">
+      <div className="mb-8 text-center">
+        <p className="text-sm uppercase tracking-[0.35em] text-sky-300">
+          Portfolio Experience
+        </p>
+        <h2 className="mt-3 text-4xl font-semibold text-white md:text-5xl">
+          Fullscreen Hero and Bento Grid
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-300">
+          Built for an immersive portfolio experience with scroll-triggered
+          video frames, smooth Lenis scrolling, and a responsive Bento-style
+          about section.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function AIToolsMarquee() {
+  const tools = [
+    "/ai_tools/antigravity.webp",
+    "/ai_tools/aws-color.webp",
+    "/ai_tools/azure-color.webp",
+    "/ai_tools/cloudflare-color.webp",
+    "/ai_tools/github.webp",
+    "/ai_tools/groq_logo.webp",
+    "/ai_tools/ollama-icon.webp",
+    "/ai_tools/spline_logo.webp",
+    "/ai_tools/pngwing.com.png",
+  ];
+
+  return (
+    <section className="bg-[#020308] py-8 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="glass-card rounded-[2.5rem] border border-white/5 p-4 md:p-6 overflow-hidden relative group">
+          {/* Faded edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#020308] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#020308] to-transparent z-10 pointer-events-none" />
+
+          <div className="flex gap-4 md:gap-10 animate-marquee whitespace-nowrap">
+            {[...tools, ...tools, ...tools].map((tool, i) => (
+              <div
+                key={i}
+                className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center p-3 md:p-5 shrink-0 transition-transform duration-500 hover:scale-110 hover:border-sky-500/50"
+              >
+                <img
+                  src={tool}
+                  alt="AI Tool"
+                  className="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-500"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FloatingProjects() {
+  const { projects } = useProjects();
+  const [items, setItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Generate static random values once mounted to avoid flickering
+    const shuffled = [...projects].sort(() => 0.5 - Math.random()).slice(0, 6);
+    const configured = shuffled.map((project) => {
+      // Generate 5 random points for organic, multi-directional floating
+      const generatePoints = (range: number) => [
+        0,
+        (Math.random() - 0.5) * range,
+        (Math.random() - 0.5) * range,
+        (Math.random() - 0.5) * range,
+        0,
+      ];
+
+      return {
+        ...project,
+        top: Math.random() * 60 + 10, // 10% to 70%
+        left: Math.random() * 70 + 10, // 10% to 80%
+        width: Math.random() * 60 + 100, // 100px to 160px (smaller size)
+        duration: Math.random() * 25 + 30, // 30s to 55s for smoother organic feel
+        delay: Math.random() * -30,
+        yPoints: generatePoints(200), // larger range for more dynamic movement
+        xPoints: generatePoints(200),
+        rPoints: [
+          0,
+          Math.random() * 20 - 10,
+          Math.random() * 20 - 10,
+          Math.random() * 20 - 10,
+          0,
+        ],
+      };
+    });
+    setItems(configured);
+  }, [projects]);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[5]">
+      {items.map((item) => (
+        <motion.div
+          key={item.id}
+          className="absolute pointer-events-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl glass-card group cursor-pointer transition-colors duration-500 hover:border-sky-500/50 hover:shadow-[0_0_30px_rgba(56,189,248,0.3)]"
+          style={{
+            top: `${item.top}%`,
+            left: `${item.left}%`,
+            width: `${item.width}px`,
+            aspectRatio: "16/10",
+          }}
+          animate={{
+            y: item.yPoints,
+            x: item.xPoints,
+            rotate: item.rPoints,
+          }}
+          transition={{
+            duration: item.duration,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: item.delay,
+            times: [0, 0.25, 0.5, 0.75, 1], // distribute animation smoothly
+          }}
+          whileHover={{
+            scale: 1.25,
+            zIndex: 50,
+            transition: { duration: 0.3 },
+          }}
+        >
+          <img
+            src={item.image}
+            alt={item.title}
+            className="w-full h-full object-cover filter grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-slate-950/50 opacity-100 group-hover:opacity-0 transition-opacity duration-700 pointer-events-none" />
+
+          <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out pointer-events-none flex flex-col justify-end">
+            <h4 className="text-white text-[10px] md:text-xs font-black uppercase tracking-widest truncate leading-tight mb-0.5">
+              {item.title}
+            </h4>
+            <p className="text-sky-400 text-[8px] font-bold uppercase tracking-widest truncate">
+              {item.category}
+            </p>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function AppHeroSection() {
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const taglineRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!taglineRef.current) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".tagline-word",
+        { opacity: 0.15, y: 10 },
+        {
+          opacity: 1,
+          y: 0,
+          stagger: 0.1,
+          ease: "none",
+          scrollTrigger: {
+            trigger: taglineRef.current,
+            start: "top 90%",
+            end: "top 60%",
+            scrub: true,
+          },
+        },
+      );
+    }, taglineRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <div className="relative overflow-hidden text-white bg-[#020308]">
+      <section
+        ref={sectionRef}
+        className="relative h-screen flex items-center justify-center"
+      >
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/hero%20section/hero%20background.jpeg"
+            alt="Background"
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#020308] to-transparent" />
+        </div>
+
+        <FloatingProjects />
+
+        <div className="relative z-20 w-full max-w-[90rem] mx-auto px-6 md:px-10 h-full flex flex-col justify-end items-center md:items-start text-center md:text-left pb-16 md:pb-32">
+          {/* Top Navigation Links */}
+          <div className="absolute top-8 right-6 md:right-10 flex gap-6 text-xs uppercase tracking-[0.3em] text-white/60 md:text-sm z-30">
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-sky-400 transition-colors duration-300"
+            >
+              LinkedIn
+            </a>
+            <a
+              href="mailto:hello@example.com"
+              className="hover:text-sky-400 transition-colors duration-300"
+            >
+              Email
+            </a>
+          </div>
+          <div className="max-w-xl space-y-4 md:space-y-6">
+            {/* Label with minimalist accent */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="flex items-center justify-center md:justify-start gap-3 text-sky-400 font-bold uppercase tracking-[0.3em] text-[10px] md:text-xs"
+            >
+              <span className="w-10 h-[1px] bg-sky-500/50"></span>
+              AI/ML Engineer
+            </motion.div>
+
+            {/* Minimalist Description Paragraph */}
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-slate-300 text-sm md:text-base font-normal leading-relaxed tracking-wide max-w-md opacity-90 mx-auto md:mx-0"
+            >
+              Designing immersive systems, adaptive interfaces, and future-ready
+              product experiences with vision-first media and responsive AI
+              workflows.
+            </motion.p>
+
+            {/* Refined Scroll Indicator */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex items-center justify-center md:justify-start gap-4 pt-4"
+            >
+              <div className="flex h-10 w-6 items-end justify-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
+                <span className="block h-2 w-2 rounded-full bg-sky-400 animate-bounce mb-1.5" />
+              </div>
+              <span className="uppercase tracking-[0.4em] text-slate-400 text-[9px] font-medium">
+                Scroll to explore
+              </span>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Foreground Image - Responsive Handling */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+          className="absolute bottom-0 left-[5%] md:left-auto md:translate-x-0 md:right-0 lg:right-[5%] z-10 block w-[68vw] max-w-[68vw] h-[64vh] md:w-auto md:max-w-none md:h-[85vh] pointer-events-none opacity-90 md:opacity-100"
+        >
+          <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-3/4 h-1/2 bg-sky-500/20 blur-[60px] md:blur-[100px] rounded-full animate-pulse" />
+          <img
+            src="/hero%20section/hero%20image.png.png"
+            alt="Hero Profile"
+            className="relative z-20 h-full w-full object-contain object-left-bottom md:object-contain md:object-bottom filter md:drop-shadow-[0_0_30px_rgba(56,189,248,0.2)] pointer-events-auto transition-transform duration-700"
+          />
+        </motion.div>
+
+        {/* ── AI Skills Marquee ── */}
+        <div className="skills-marquee-section absolute bottom-0 left-0 right-0 z-20 overflow-hidden bg-slate-950/80 py-4 md:py-6 backdrop-blur-md border-t border-white/5">
+          {/* Fade edges */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 md:w-32 bg-gradient-to-r from-[#020308] to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 md:w-32 bg-gradient-to-l from-[#020308] to-transparent" />
+
+          <div className="skills-track skills-track--left flex whitespace-nowrap">
+            {Array.from({ length: 2 }).map((_, copy) => (
+              <div key={copy} className="flex shrink-0 items-center gap-4 pr-4">
+                {[
+                  "PYTHON",
+                  "GENERATIVE AI",
+                  "AGENTIC AI",
+                  "LLM ORCHESTRATION",
+                  "PYTORCH",
+                  "TENSORFLOW",
+                  "PANDAS",
+                  "NUMPY",
+                  "LANGCHAIN",
+                  "LANGGRAPH",
+                  "RAG PIPELINES",
+                  "AWS",
+                  "AZURE",
+                  "COMPUTER VISION",
+                  "NLP",
+                  "TRANSFORMERS",
+                ].map((skill) => (
+                  <span
+                    key={`${skill}-${copy}`}
+                    className="flex items-center gap-4"
+                  >
+                    <span className="skills-text text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-wider">
+                      {skill}
+                    </span>
+                    <span className="skills-dot block h-2 w-2 md:h-3 md:w-3 shrink-0 rounded-full bg-sky-400/60" />
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Profile & About Section ── */}
+      <section className="bg-[#020308] px-6 py-4 text-slate-100 md:px-12">
+        <div className="mx-auto max-w-5xl">
+          {/* Tagline Section */}
+          <div
+            ref={taglineRef}
+            className="mb-6 overflow-hidden rounded-[1.5rem] bg-transparent p-6 backdrop-blur-sm transition-all duration-500"
+          >
+            <h2 className="text-xl md:text-3xl font-black text-white text-center leading-tight tracking-tight">
+              {"I blend creativity with technical expertise to build AI/ML solutions that drive real-world impact"
+                .split(" ")
+                .map((word, i) => (
+                  <span
+                    key={i}
+                    className="tagline-word inline-block mr-[0.25em]"
+                  >
+                    {word}
+                  </span>
+                ))}
+            </h2>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+            {/* Profile Image */}
+            <TiltCard className="glass-card min-h-[300px] overflow-hidden rounded-[1.5rem] lg:min-h-0">
+              <div
+                className="relative h-full overflow-hidden"
+                style={{ transform: "translateZ(20px)" }}
+              >
+                <ProfileAnimatedImage />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_40%)]" />
+              </div>
+            </TiltCard>
+
+            <div className="flex flex-col gap-4">
+              {/* About Section */}
+              <TiltCard className="glass-card rounded-[1.5rem] p-5 flex flex-col justify-center flex-1">
+                <div
+                  className="space-y-4"
+                  style={{ transform: "translateZ(30px)" }}
+                >
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.35em] text-sky-300 mb-3">
+                      About Me
+                    </p>
+                    <h2 className="text-2xl font-semibold text-white mb-2">
+                      Rahul Yadav
+                    </h2>
+                    <p className="text-xs leading-6 text-slate-300">
+                      I'm an aspiring AI/ML Engineer and BSc IT student. I'm
+                      passionate about building intelligent systems and
+                      exploring how data can be used to create smarter
+                      solutions.
+                    </p>
+                  </div>
+                  <div className="pt-4 border-t border-white/10">
+                    <div className="flex flex-wrap gap-2">
+                      {["Machine Learning", "AI Systems", "Data Science"].map(
+                        (item) => (
+                          <span
+                            key={item}
+                            className="inline-block px-3 py-1 text-[10px] rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-300"
+                          >
+                            {item}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </TiltCard>
+
+              {/* Music Player Section */}
+              <MusicPlayer />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI Tools Marquee ── */}
+      <AIToolsMarquee />
+
+      {/* ── Selected Works Section ── */}
+      <SelectedWorks />
+
+      {/* ── Tech Arsenal Section ── */}
+      <TechStackGrid />
+
+      {/* ── Experience Section ── */}
+      <ExperienceSection />
+    </div>
+  );
+}
+
+function ExperienceSection() {
+  const experiences = [
+    {
+      role: "AI/ML Engineering Intern",
+      company: "TechNova Solutions",
+      period: "2024 - PRESENT",
+      description:
+        "Developing robust RAG pipelines and fine-tuning Open-Source LLMs (Llama 3, Mistral) for enterprise-grade customer support automation.",
+      skills: ["LangChain", "VectorDB", "Llama 3"],
+    },
+    {
+      role: "Machine Learning Researcher",
+      company: "University AI Lab",
+      period: "2023 - 2024",
+      description:
+        "Conducted research on vision-language models for autonomous medical imaging analysis, achieving 15% improvement in diagnostic accuracy.",
+      skills: ["PyTorch", "Computer Vision", "VLM"],
+    },
+    {
+      role: "Junior Data Scientist",
+      company: "FutureSoft AI",
+      period: "2022 - 2023",
+      description:
+        "Engineered predictive models for retail inventory optimization and performed deep EDA to uncover market trends for B2B clients.",
+      skills: ["Scikit-learn", "Pandas", "SQL"],
+    },
+  ];
+
+  return (
+    <section className="bg-[#020308] py-32 px-6 md:px-12 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-white/5" />
+
+      <div className="max-w-5xl mx-auto relative z-10">
+        <div className="mb-20 text-center">
+          <h2 className="text-[10px] uppercase tracking-[0.8em] text-sky-400 font-black mb-2">
+            Experience
+          </h2>
+          <div className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
+        </div>
+
+        <div className="space-y-12">
+          {experiences.map((exp, i) => (
+            <div
+              key={i}
+              className={`flex flex-col md:flex-row gap-8 items-center ${i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"}`}
+            >
+              <div className="flex-1 w-full">
+                <TiltCard className="glass-card p-8 rounded-[2rem] border border-white/5 hover:border-sky-500/30 transition-all duration-500 group">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h3 className="text-xl font-black text-white mb-1 group-hover:text-sky-400 transition-colors">
+                        {exp.role}
+                      </h3>
+                      <p className="text-sky-500/80 text-xs font-bold tracking-widest">
+                        {exp.company}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-500 border border-white/10 px-3 py-1 rounded-full">
+                      {exp.period}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-400 leading-relaxed mb-8">
+                    {exp.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {exp.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-bold text-slate-300 uppercase tracking-wider"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </TiltCard>
+              </div>
+
+              <div className="relative flex items-center justify-center shrink-0 w-12">
+                <div className="w-4 h-4 rounded-full bg-sky-500 shadow-[0_0_15px_rgba(56,189,248,0.5)] z-20" />
+                <div className="absolute w-8 h-8 rounded-full bg-sky-500/20 animate-ping" />
+              </div>
+
+              <div className="flex-1 hidden md:block" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AdminDashboard() {
+  const navigate = useNavigate();
+  const { resetProjects } = useProjects();
+  const { resetTechs } = useTechStack();
+
+  return (
+    <DashboardShell title="Admin Dashboard">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="glass-card p-8 rounded-[2rem] border border-white/10">
+          <h3 className="text-xl font-bold text-white mb-2">
+            Projects Management
+          </h3>
+          <p className="text-slate-400 text-sm mb-6">
+            Manage your portfolio projects, add new works, and update details.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate("/admin/projects")}
+              className="w-full py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400"
+            >
+              Go to Projects
+            </button>
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "This will reset all projects to the default list. Continue?",
+                  )
+                ) {
+                  resetProjects();
+                  alert("Projects reset to defaults.");
+                }
+              }}
+              className="w-full py-3 rounded-2xl bg-white/5 text-slate-400 font-bold uppercase tracking-widest transition hover:bg-white/10 text-xs"
+            >
+              Reset Projects
+            </button>
+          </div>
+        </div>
+
+        <div className="glass-card p-8 rounded-[2rem] border border-white/10">
+          <h3 className="text-xl font-bold text-white mb-2">
+            Tech Stack Management
+          </h3>
+          <p className="text-slate-400 text-sm mb-6">
+            Update your technical arsenal, add new tools, and organize
+            categories.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate("/admin/tech-stack")}
+              className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest transition hover:bg-white/10"
+            >
+              Manage Stack
+            </button>
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "This will reset your tech stack to defaults. Continue?",
+                  )
+                ) {
+                  resetTechs();
+                  alert("Tech stack reset.");
+                }
+              }}
+              className="w-full py-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase tracking-widest transition hover:bg-red-500/20"
+            >
+              Reset Stack
+            </button>
+          </div>
+        </div>
+      </div>
+    </DashboardShell>
+  );
+}
+
+function ProjectsPage() {
+  const { projects } = useProjects();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#020308] text-white p-6 md:p-12 lg:p-20">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-16 gap-8">
+          <div>
+            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
+              Project <span className="text-sky-500">Archive</span>
+            </h1>
+            <p className="text-slate-400 max-w-xl text-sm md:text-base leading-relaxed">
+              A comprehensive collection of my work across AI, ML, and
+              specialized software engineering.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all font-bold uppercase tracking-widest text-xs group"
+          >
+            <svg
+              className="w-4 h-4 transition-transform group-hover:-translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Back to Home
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {projects.map((project) => (
+            <TiltCard
+              key={project.id}
+              className="glass-card group overflow-hidden rounded-[2rem] border border-white/10 transition-all duration-500 hover:border-sky-500/50"
+            >
+              <div className="relative h-44 overflow-hidden">
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80" />
+
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-bold text-sky-400 uppercase tracking-widest">
+                    {project.category}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-black text-white tracking-tight">
+                    {project.title}
+                  </h3>
+                  <span className="text-[10px] font-bold text-slate-500 font-mono">
+                    {project.year}
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-slate-400 leading-relaxed mb-6 line-clamp-2">
+                  {project.description}
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {project.techStack?.slice(0, 3).map((tech) => (
+                    <span
+                      key={tech}
+                      className="text-[9px] font-bold text-slate-300 uppercase tracking-wider px-2 py-1 bg-white/5 rounded-md border border-white/5"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                  {(project.techStack?.length || 0) > 3 && (
+                    <span className="text-[9px] font-bold text-sky-400 px-2 py-1 bg-sky-500/10 rounded-md">
+                      +{(project.techStack?.length || 0) - 3}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <a
+                    href={project.hostedLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group/link flex items-center gap-2 text-[10px] font-bold text-sky-400 uppercase tracking-[0.2em] transition-all hover:text-white"
+                  >
+                    <span>Live Site</span>
+                    <svg
+                      className="w-3 h-3 transition-transform group-hover/link:-rotate-45"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </TiltCard>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+class ErrorBoundary extends React.Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#020308] flex items-center justify-center p-10 text-white">
+          <div className="max-w-xl w-full glass-card p-8 rounded-3xl border border-rose-500/30">
+            <h2 className="text-2xl font-bold text-rose-400 mb-4">
+              Application Error
+            </h2>
+            <p className="text-slate-400 mb-6 text-sm leading-relaxed">
+              The application encountered a runtime error. This usually happens
+              due to missing assets or data parsing issues.
+            </p>
+            <pre className="bg-black/50 p-4 rounded-xl text-xs overflow-auto max-h-40 border border-white/5 mb-6 text-slate-300">
+              {this.state.error?.message}
+            </pre>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<AppHeroSection />} />
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/admin/login" element={<LoginPage />} />
+            <Route
+              path="/admin/tech-stack"
+              element={
+                <ProtectedRoute>
+                  <TechStackManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/projects"
+              element={
+                <ProtectedRoute>
+                  <AdminProjects />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/add-project"
+              element={
+                <ProtectedRoute>
+                  <AdminAddProject />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/edit-project/:id"
+              element={
+                <ProtectedRoute>
+                  <AdminEditProject />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
+      </BrowserRouter>
+    </ErrorBoundary>
+  );
+}
