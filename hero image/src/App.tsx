@@ -80,6 +80,91 @@ const INITIAL_EXPERIENCES: Experience[] = [
   },
 ];
 
+export interface Certification {
+  id: string;
+  title: string;
+  organization: string;
+  date: string;
+  credentialId: string;
+  skills: string[];
+  image: string;
+  url?: string;
+  category: "AI/ML" | "Web Development" | "Cybersecurity" | "Cloud" | "Programming" | string;
+  featured?: boolean;
+}
+
+const INITIAL_CERTIFICATIONS: Certification[] = [
+  {
+    id: "1",
+    title: "AWS Certified Machine Learning – Specialty",
+    organization: "Amazon Web Services",
+    date: "2024",
+    credentialId: "AWS-ML-12345",
+    skills: ["SageMaker", "Deep Learning", "Data Engineering"],
+    image: "/ai_tools/aws-color.webp",
+    url: "#",
+    category: "Cloud",
+  },
+  {
+    id: "2",
+    title: "DeepLearning.AI TensorFlow Developer",
+    organization: "Coursera",
+    date: "2023",
+    credentialId: "DL-TF-98765",
+    skills: ["TensorFlow", "Computer Vision", "NLP"],
+    image: "/tech_stack/tensorflow.png",
+    url: "#",
+    category: "AI/ML",
+  },
+  {
+    id: "3",
+    title: "Full Stack Open",
+    organization: "University of Helsinki",
+    date: "2023",
+    credentialId: "FSO-2023",
+    skills: ["React", "Node.js", "GraphQL"],
+    image: "/tech_stack/javascript.png",
+    url: "#",
+    category: "Web Development",
+  },
+];
+
+export interface LearningItem {
+  id: string;
+  title: string;
+  type: "course" | "progress" | "goal";
+  status: "completed" | "current" | "upcoming";
+  technologies: string[];
+  progressPercentage?: number;
+}
+
+const INITIAL_LEARNING_ITEMS: LearningItem[] = [
+  {
+    id: "1",
+    title: "Advanced NLP with Hugging Face",
+    type: "course",
+    status: "completed",
+    technologies: ["Transformers", "PyTorch"],
+    progressPercentage: 100,
+  },
+  {
+    id: "2",
+    title: "Building Agentic Workflows with LangGraph",
+    type: "progress",
+    status: "current",
+    technologies: ["LangChain", "LLMs"],
+    progressPercentage: 65,
+  },
+  {
+    id: "3",
+    title: "Kubernetes & Cloud Native Architecture",
+    type: "goal",
+    status: "upcoming",
+    technologies: ["Docker", "Kubernetes", "AWS"],
+    progressPercentage: 0,
+  },
+];
+
 interface Project {
   id: string;
   title: string;
@@ -469,6 +554,154 @@ function useExperience() {
   };
 
   return { experiences, addExperience, updateExperience, deleteExperience, resetExperiences };
+}
+
+function useCertifications() {
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("portfolio-certifications");
+      if (saved) {
+        setCertifications(JSON.parse(saved));
+      } else {
+        localStorage.setItem("portfolio-certifications", JSON.stringify(INITIAL_CERTIFICATIONS));
+        setCertifications(INITIAL_CERTIFICATIONS);
+      }
+    } catch (err) {
+      console.error("Failed to load certifications:", err);
+      setCertifications(INITIAL_CERTIFICATIONS);
+    }
+  }, []);
+
+  const saveCertifications = (newCerts: Certification[]) => {
+    localStorage.setItem("portfolio-certifications", JSON.stringify(newCerts));
+    setCertifications(newCerts);
+  };
+
+  const addCertification = (cert: Omit<Certification, "id">) => {
+    const newCert = { ...cert, id: Date.now().toString() };
+    saveCertifications([...certifications, newCert]);
+  };
+
+  const updateCertification = (updated: Certification) => {
+    saveCertifications(certifications.map((c) => (c.id === updated.id ? updated : c)));
+  };
+
+  const deleteCertification = (id: string) => {
+    saveCertifications(certifications.filter((c) => c.id !== id));
+  };
+
+  const resetCertifications = () => {
+    saveCertifications(INITIAL_CERTIFICATIONS);
+  };
+
+  return { certifications, addCertification, updateCertification, deleteCertification, resetCertifications };
+}
+
+function useLearningItems() {
+  const [learningItems, setLearningItems] = useState<LearningItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("portfolio-learning-items");
+      if (saved) {
+        setLearningItems(JSON.parse(saved));
+      } else {
+        localStorage.setItem("portfolio-learning-items", JSON.stringify(INITIAL_LEARNING_ITEMS));
+        setLearningItems(INITIAL_LEARNING_ITEMS);
+      }
+    } catch (err) {
+      console.error("Failed to load learning items:", err);
+      setLearningItems(INITIAL_LEARNING_ITEMS);
+    }
+  }, []);
+
+  const saveLearningItems = (newItems: LearningItem[]) => {
+    localStorage.setItem("portfolio-learning-items", JSON.stringify(newItems));
+    setLearningItems(newItems);
+  };
+
+  const addLearningItem = (item: Omit<LearningItem, "id">) => {
+    const newItem = { ...item, id: Date.now().toString() };
+    saveLearningItems([...learningItems, newItem]);
+  };
+
+  const updateLearningItem = (updated: LearningItem) => {
+    saveLearningItems(learningItems.map((i) => (i.id === updated.id ? updated : i)));
+  };
+
+  const deleteLearningItem = (id: string) => {
+    saveLearningItems(learningItems.filter((i) => i.id !== id));
+  };
+
+  const resetLearningItems = () => {
+    saveLearningItems(INITIAL_LEARNING_ITEMS);
+  };
+
+  return { learningItems, addLearningItem, updateLearningItem, deleteLearningItem, resetLearningItems };
+}
+
+function CustomCursor() {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleHoverStart = () => setIsHovering(true);
+    const handleHoverEnd = () => setIsHovering(false);
+
+    window.addEventListener("mousemove", handleMouseMove as any);
+
+    // Track interactive elements for hover effect
+    const updateInteractiveElements = () => {
+      const interactiveElements = document.querySelectorAll(
+        'a, button, input, textarea, [role="button"], .group, .clickable'
+      );
+      interactiveElements.forEach((el) => {
+        el.addEventListener("mouseenter", handleHoverStart);
+        el.addEventListener("mouseleave", handleHoverEnd);
+      });
+    };
+
+    updateInteractiveElements();
+    
+    // Re-run periodically or on navigation if needed
+    const interval = setInterval(updateInteractiveElements, 2000);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove as any);
+      clearInterval(interval);
+    };
+  }, []);
+
+  return (
+    <>
+      <motion.div
+        className="custom-cursor-inner"
+        animate={{
+          x: mousePos.x - 4,
+          y: mousePos.y - 4,
+          scale: isHovering ? 2 : 1,
+          opacity: 1,
+        }}
+        transition={{ type: "spring", damping: 30, stiffness: 400, mass: 0.2 }}
+      />
+      <motion.div
+        className="custom-cursor-outer"
+        animate={{
+          x: mousePos.x - 18,
+          y: mousePos.y - 18,
+          scale: isHovering ? 1.8 : 1,
+          borderWidth: isHovering ? "2px" : "1px",
+        }}
+        transition={{ type: "spring", damping: 25, stiffness: 200, mass: 0.6 }}
+      />
+    </>
+  );
 }
 
 function SelectedWorks() {
@@ -1674,6 +1907,278 @@ function AdminEditExperience() {
   );
 }
 
+function AdminCertifications() {
+  const navigate = useNavigate();
+  const { certifications, deleteCertification } = useCertifications();
+
+  return (
+    <DashboardShell title="Manage Certifications">
+      <div className="mb-6 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-white">All Certifications</h2>
+        <button
+          onClick={() => navigate("/admin/add-certification")}
+          className="rounded-2xl bg-sky-500 px-6 py-2 font-bold text-slate-950 transition hover:bg-sky-400"
+        >
+          Add New
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {certifications.map((cert) => (
+          <div key={cert.id} className="glass-card rounded-[2rem] p-6 border border-white/10 flex flex-col">
+            <div className="mb-4 flex items-center gap-4">
+              <img src={cert.image} alt="" className="w-12 h-12 rounded object-cover bg-white/5" />
+              <div>
+                <h3 className="font-bold text-white leading-snug">{cert.title}</h3>
+                <p className="text-xs text-sky-400">{cert.organization}</p>
+              </div>
+            </div>
+            {cert.featured && (
+              <span className="mb-4 self-start px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-400 bg-amber-400/10 rounded-md">
+                Featured
+              </span>
+            )}
+            <div className="mt-auto flex gap-3 pt-4 border-t border-white/5">
+              <button
+                onClick={() => navigate(`/admin/edit-certification/${cert.id}`)}
+                className="flex-1 rounded-xl bg-white/5 py-2 text-xs font-bold text-white hover:bg-white/10 transition"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm("Delete this certification?")) deleteCertification(cert.id);
+                }}
+                className="flex-1 rounded-xl bg-red-500/10 py-2 text-xs font-bold text-red-500 hover:bg-red-500/20 transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </DashboardShell>
+  );
+}
+
+function CertificationForm({
+  initialData,
+  onSubmit,
+}: {
+  initialData?: Certification;
+  onSubmit: (data: any) => void;
+}) {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    title: initialData?.title || "",
+    organization: initialData?.organization || "",
+    date: initialData?.date || "",
+    credentialId: initialData?.credentialId || "",
+    skills: initialData?.skills.join(", ") || "",
+    image: initialData?.image || "",
+    url: initialData?.url || "",
+    category: initialData?.category || "AI/ML",
+    featured: initialData?.featured || false,
+  });
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      skills: formData.skills.split(",").map((s) => s.trim()).filter(Boolean),
+    });
+    navigate("/admin/certifications");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="glass-card rounded-[2rem] p-8 border border-white/10 space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Title
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
+        </label>
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Organization
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.organization} onChange={(e) => setFormData({ ...formData, organization: e.target.value })} required />
+        </label>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Date
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required />
+        </label>
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Credential ID
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.credentialId} onChange={(e) => setFormData({ ...formData, credentialId: e.target.value })} required />
+        </label>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Category
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} list="cert-categories" required />
+          <datalist id="cert-categories">
+            <option value="AI/ML" />
+            <option value="Web Development" />
+            <option value="Cybersecurity" />
+            <option value="Cloud" />
+            <option value="Programming" />
+          </datalist>
+        </label>
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Skills (comma separated)
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.skills} onChange={(e) => setFormData({ ...formData, skills: e.target.value })} required />
+        </label>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Image URL
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} required />
+        </label>
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Verification URL
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} />
+        </label>
+      </div>
+      <label className="flex items-center gap-3 cursor-pointer">
+        <input type="checkbox" checked={formData.featured} onChange={(e) => setFormData({ ...formData, featured: e.target.checked })} className="w-5 h-5 rounded border-white/10 bg-slate-900 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900" />
+        <span className="text-sm font-bold text-slate-300 uppercase tracking-widest">Featured Certification</span>
+      </label>
+      <div className="flex justify-end gap-4 pt-2">
+        <button type="button" onClick={() => navigate("/admin/certifications")} className="px-8 py-3 rounded-2xl bg-white/5 font-bold uppercase tracking-widest transition hover:bg-white/10">Cancel</button>
+        <button type="submit" className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400">{initialData ? "Update" : "Create"}</button>
+      </div>
+    </form>
+  );
+}
+
+function AdminAddCertification() {
+  const { addCertification } = useCertifications();
+  return <DashboardShell title="Add Certification"><CertificationForm onSubmit={addCertification} /></DashboardShell>;
+}
+
+function AdminEditCertification() {
+  const { id } = useParams();
+  const { certifications, updateCertification } = useCertifications();
+  const cert = certifications.find((c) => c.id === id);
+  if (!cert) return null;
+  return <DashboardShell title="Edit Certification"><CertificationForm initialData={cert} onSubmit={(data) => updateCertification({ ...data, id })} /></DashboardShell>;
+}
+
+function AdminLearningItems() {
+  const navigate = useNavigate();
+  const { learningItems, deleteLearningItem } = useLearningItems();
+
+  return (
+    <DashboardShell title="Manage Learning Journey">
+      <div className="mb-6 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-white">All Timeline Items</h2>
+        <button
+          onClick={() => navigate("/admin/add-learning")}
+          className="rounded-2xl bg-sky-500 px-6 py-2 font-bold text-slate-950 transition hover:bg-sky-400"
+        >
+          Add New
+        </button>
+      </div>
+      <div className="space-y-4">
+        {learningItems.map((item) => (
+          <div key={item.id} className="glass-card rounded-2xl p-6 border border-white/10 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-widest bg-white/5 text-slate-400 rounded-md">{item.type}</span>
+                <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md ${item.status === 'completed' ? 'bg-sky-500/10 text-sky-400' : item.status === 'current' ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>{item.status}</span>
+              </div>
+              <h3 className="font-bold text-white">{item.title}</h3>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => navigate(`/admin/edit-learning/${item.id}`)} className="rounded-xl bg-white/5 px-4 py-2 text-xs font-bold text-white hover:bg-white/10 transition">Edit</button>
+              <button onClick={() => { if (window.confirm("Delete this item?")) deleteLearningItem(item.id); }} className="rounded-xl bg-red-500/10 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-500/20 transition">Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </DashboardShell>
+  );
+}
+
+function LearningItemForm({
+  initialData,
+  onSubmit,
+}: {
+  initialData?: LearningItem;
+  onSubmit: (data: any) => void;
+}) {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    title: initialData?.title || "",
+    type: initialData?.type || "course",
+    status: initialData?.status || "upcoming",
+    technologies: initialData?.technologies.join(", ") || "",
+    progressPercentage: initialData?.progressPercentage || 0,
+  });
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      technologies: formData.technologies.split(",").map((s) => s.trim()).filter(Boolean),
+    });
+    navigate("/admin/learning");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="glass-card rounded-[2rem] p-8 border border-white/10 space-y-6">
+      <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+        Title
+        <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
+      </label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Type
+          <select className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}>
+            <option value="course">Course</option>
+            <option value="progress">Progress</option>
+            <option value="goal">Goal</option>
+          </select>
+        </label>
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Status
+          <select className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}>
+            <option value="completed">Completed</option>
+            <option value="current">Current</option>
+            <option value="upcoming">Upcoming</option>
+          </select>
+        </label>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Technologies (comma separated)
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.technologies} onChange={(e) => setFormData({ ...formData, technologies: e.target.value })} required />
+        </label>
+        <label className={`block text-sm font-bold text-slate-300 uppercase tracking-widest ${formData.status !== 'current' ? 'opacity-50' : ''}`}>
+          Progress Percentage
+          <input type="number" min="0" max="100" className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.progressPercentage} onChange={(e) => setFormData({ ...formData, progressPercentage: parseInt(e.target.value) || 0 })} disabled={formData.status !== 'current'} />
+        </label>
+      </div>
+      <div className="flex justify-end gap-4 pt-2">
+        <button type="button" onClick={() => navigate("/admin/learning")} className="px-8 py-3 rounded-2xl bg-white/5 font-bold uppercase tracking-widest transition hover:bg-white/10">Cancel</button>
+        <button type="submit" className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400">{initialData ? "Update" : "Create"}</button>
+      </div>
+    </form>
+  );
+}
+
+function AdminAddLearningItem() {
+  const { addLearningItem } = useLearningItems();
+  return <DashboardShell title="Add Timeline Item"><LearningItemForm onSubmit={addLearningItem} /></DashboardShell>;
+}
+
+function AdminEditLearningItem() {
+  const { id } = useParams();
+  const { learningItems, updateLearningItem } = useLearningItems();
+  const item = learningItems.find((i) => i.id === id);
+  if (!item) return null;
+  return <DashboardShell title="Edit Timeline Item"><LearningItemForm initialData={item} onSubmit={(data) => updateLearningItem({ ...data, id })} /></DashboardShell>;
+}
+
 function DashboardShell({
   title,
   children,
@@ -1711,6 +2216,18 @@ function DashboardShell({
               className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
             >
               Experience
+            </button>
+            <button
+              onClick={() => navigate("/admin/certifications")}
+              className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            >
+              Certs
+            </button>
+            <button
+              onClick={() => navigate("/admin/learning")}
+              className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            >
+              Learning
             </button>
             <button
               onClick={() => navigate("/admin/add-project")}
@@ -2177,6 +2694,12 @@ function AppHeroSection() {
 
       {/* ── Experience Section ── */}
       <ExperienceSection />
+
+      {/* ── Certifications Section ── */}
+      <CertificationsSection />
+
+      {/* ── Learning Journey Section ── */}
+      <LearningJourneySection />
     </div>
   );
 }
@@ -2243,6 +2766,361 @@ function ExperienceSection() {
               <div className="flex-1 hidden md:block" />
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CertificationsSection() {
+  const { certifications } = useCertifications();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+
+  const categories = ["All", "AI/ML", "Web Development", "Cybersecurity", "Cloud", "Programming"];
+
+  const filteredCerts = certifications.filter((cert) => {
+    const matchesCategory = activeCategory === "All" || cert.category === activeCategory;
+    const matchesSearch =
+      cert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cert.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cert.skills.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <section className="bg-[#020308] py-32 px-6 md:px-12 relative overflow-hidden border-t border-white/5">
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="mb-16 text-center">
+          <h2 className="text-[10px] uppercase tracking-[0.8em] text-sky-400 font-black mb-2">
+            Licenses & Certifications
+          </h2>
+          <div className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-sky-500 to-transparent mb-12" />
+        </div>
+
+        {/* Filter & Search Bar */}
+        <div className="glass-card rounded-[2rem] p-4 mb-12 border border-white/10 flex flex-col md:flex-row gap-4 items-center justify-between sticky top-4 z-50 backdrop-blur-xl">
+          <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`whitespace-nowrap px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
+                  activeCategory === cat
+                    ? "bg-sky-500 text-slate-950 shadow-[0_0_20px_rgba(56,189,248,0.3)]"
+                    : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full md:w-64 shrink-0">
+            <svg
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search certifications..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white outline-none focus:border-sky-500/50 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimatePresence mode="popLayout">
+            {filteredCerts.map((cert) => (
+              <motion.div
+                key={cert.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                layout
+              >
+                <TiltCard className="glass-card h-full rounded-[2rem] border border-white/5 hover:border-sky-500/30 transition-all duration-500 group overflow-hidden flex flex-col">
+                  <div className="relative h-40 overflow-hidden bg-white/5 flex items-center justify-center p-6">
+                    <img
+                      src={cert.image}
+                      alt={cert.title}
+                      className="max-h-full max-w-full object-contain transition-transform duration-700 group-hover:scale-110 drop-shadow-2xl"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#020308] via-transparent to-transparent opacity-80" />
+                    <div className="absolute top-4 right-4">
+                      <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-bold text-sky-400 uppercase tracking-widest">
+                        {cert.category}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-8 flex flex-col flex-1">
+                    <div className="flex justify-between items-start mb-4 gap-4">
+                      <div>
+                        <h3 className="text-lg font-black text-white mb-1 group-hover:text-sky-400 transition-colors leading-snug">
+                          {cert.title}
+                        </h3>
+                        <p className="text-sky-500/80 text-[11px] font-bold tracking-widest uppercase">
+                          {cert.organization}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-6">
+                      <div className="text-[10px] font-mono text-slate-400">
+                        <span className="block text-slate-500 mb-1">ISSUED</span>
+                        {cert.date}
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-400 text-right">
+                        <span className="block text-slate-500 mb-1">
+                          CREDENTIAL ID
+                        </span>
+                        {cert.credentialId}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-8">
+                      {cert.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-[9px] font-bold text-slate-300 uppercase tracking-wider"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="mt-auto">
+                      <a
+                        href={cert.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white/5 hover:bg-sky-500 hover:text-slate-950 text-white transition-all duration-300 text-xs font-bold uppercase tracking-widest border border-white/10 hover:border-transparent"
+                      >
+                        View Certificate
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                </TiltCard>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LearningJourneySection() {
+  const { learningItems } = useLearningItems();
+  const stats = {
+    streak: 42,
+    completed: learningItems.filter((i) => i.status === "completed")
+      .length,
+    hours: 350,
+  };
+
+  return (
+    <section className="bg-[#020308] py-32 px-6 md:px-12 relative overflow-hidden border-t border-white/5">
+      <div className="max-w-5xl mx-auto relative z-10">
+        <div className="mb-20 text-center">
+          <h2 className="text-[10px] uppercase tracking-[0.8em] text-sky-400 font-black mb-2">
+            Learning Journey
+          </h2>
+          <div className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-12 items-start">
+          {/* Timeline */}
+          <div className="relative border-l border-white/10 ml-4 md:ml-8 space-y-12 pb-8">
+            {learningItems.map((item) => (
+              <div key={item.id} className="relative pl-10 md:pl-16">
+                {/* Node marker */}
+                <div
+                  className={`absolute left-0 top-0 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-[#020308] flex items-center justify-center ${
+                    item.status === "completed"
+                      ? "bg-sky-500 text-slate-950"
+                      : item.status === "current"
+                        ? "bg-sky-500/20 border-sky-500/50"
+                        : "bg-slate-800"
+                  }`}
+                >
+                  {item.status === "completed" && (
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                  {item.status === "current" && (
+                    <div className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                  )}
+                </div>
+
+                <TiltCard
+                  className={`glass-card p-6 md:p-8 rounded-[2rem] border transition-all duration-500 ${
+                    item.status === "upcoming"
+                      ? "border-white/5 opacity-60 grayscale"
+                      : "border-white/10 hover:border-sky-500/30"
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <span
+                        className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-md mb-3 inline-block ${
+                          item.status === "completed"
+                            ? "bg-sky-500/10 text-sky-400"
+                            : item.status === "current"
+                              ? "bg-amber-500/10 text-amber-400"
+                              : "bg-white/5 text-slate-400"
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                      <h3 className="text-lg font-black text-white">
+                        {item.title}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {item.status === "current" &&
+                    item.progressPercentage !== undefined && (
+                      <div className="mb-6">
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-2 font-mono">
+                          <span>COURSE PROGRESS</span>
+                          <span className="text-sky-400">
+                            {item.progressPercentage}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{
+                              width: `${item.progressPercentage}%`,
+                            }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                            viewport={{ once: true }}
+                            className="h-full bg-sky-500 rounded-full"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                  <div className="flex flex-wrap gap-2 mt-6">
+                    {item.technologies.map((tech) => (
+                      <span
+                        key={tech}
+                        className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-bold text-slate-300 uppercase tracking-wider"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </TiltCard>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats Widget */}
+          <div className="sticky top-24 space-y-6">
+            <TiltCard className="glass-card p-6 rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden">
+              <div className="absolute -right-10 -top-10 w-32 h-32 bg-sky-500/20 blur-[50px] rounded-full pointer-events-none" />
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <svg
+                  className="w-4 h-4 text-sky-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                Learning Stats
+              </h3>
+
+              <div className="space-y-6">
+                <div>
+                  <div className="text-4xl font-black text-white mb-1">
+                    {stats.streak}
+                  </div>
+                  <div className="text-[10px] text-sky-400 font-bold uppercase tracking-widest">
+                    Day Streak
+                  </div>
+                </div>
+                <div className="h-px w-full bg-white/10" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-2xl font-black text-white mb-1">
+                      {stats.completed}
+                    </div>
+                    <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                      Courses
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-white mb-1">
+                      {stats.hours}+
+                    </div>
+                    <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                      Hours
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TiltCard>
+
+            <TiltCard className="glass-card p-6 rounded-[2rem] border border-white/10">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                Current Focus
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {["Agentic AI", "Kubernetes", "LangGraph"].map((focus) => (
+                  <span
+                    key={focus}
+                    className="px-3 py-1.5 bg-sky-500/10 border border-sky-500/30 text-sky-400 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                  >
+                    {focus}
+                  </span>
+                ))}
+              </div>
+            </TiltCard>
+          </div>
         </div>
       </div>
     </section>
@@ -2342,20 +3220,51 @@ function AdminDashboard() {
             >
               Add Experience
             </button>
+          </div>
+        </div>
+
+        <div className="glass-card p-8 rounded-[2rem] border border-white/10">
+          <h3 className="text-xl font-bold text-white mb-2">
+            Certifications Management
+          </h3>
+          <p className="text-slate-400 text-sm mb-6">
+            Manage your credentials, add new licenses, and mark featured items.
+          </p>
+          <div className="space-y-3">
             <button
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "This will reset your experience to defaults. Continue?",
-                  )
-                ) {
-                  localStorage.removeItem("portfolio-experience");
-                  window.location.reload();
-                }
-              }}
-              className="w-full py-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase tracking-widest transition hover:bg-red-500/20 text-xs mt-3"
+              onClick={() => navigate("/admin/certifications")}
+              className="w-full py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400"
             >
-              Reset Experience
+              Go to Certs
+            </button>
+            <button
+              onClick={() => navigate("/admin/add-certification")}
+              className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest transition hover:bg-white/10"
+            >
+              Add Cert
+            </button>
+          </div>
+        </div>
+
+        <div className="glass-card p-8 rounded-[2rem] border border-white/10">
+          <h3 className="text-xl font-bold text-white mb-2">
+            Learning Journey
+          </h3>
+          <p className="text-slate-400 text-sm mb-6">
+            Update your current focus, track course progress, and set future goals.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate("/admin/learning")}
+              className="w-full py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400"
+            >
+              Go to Timeline
+            </button>
+            <button
+              onClick={() => navigate("/admin/add-learning")}
+              className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest transition hover:bg-white/10"
+            >
+              Add Item
             </button>
           </div>
         </div>
@@ -2540,6 +3449,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <CustomCursor />
         <AnimatePresence mode="wait">
           <Routes>
             <Route path="/" element={<AppHeroSection />} />
@@ -2606,6 +3516,54 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <AdminEditExperience />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/certifications"
+              element={
+                <ProtectedRoute>
+                  <AdminCertifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/add-certification"
+              element={
+                <ProtectedRoute>
+                  <AdminAddCertification />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/edit-certification/:id"
+              element={
+                <ProtectedRoute>
+                  <AdminEditCertification />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/learning"
+              element={
+                <ProtectedRoute>
+                  <AdminLearningItems />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/add-learning"
+              element={
+                <ProtectedRoute>
+                  <AdminAddLearningItem />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/edit-learning/:id"
+              element={
+                <ProtectedRoute>
+                  <AdminEditLearningItem />
                 </ProtectedRoute>
               }
             />

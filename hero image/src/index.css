@@ -214,3 +214,41 @@ textarea {
     filter: drop-shadow(0 0 40px rgba(56, 189, 248, 0.15));
   }
 }
+
+/* ── Custom Cursor ── */
+@media (hover: hover) and (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}
+
+.custom-cursor-inner {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  mix-blend-mode: difference;
+}
+
+.custom-cursor-outer {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+}
+
+@media (max-width: 768px) {
+  .custom-cursor-inner, .custom-cursor-outer {
+    display: none;
+  }
+  * {
+    cursor: auto !important;
+  }
+}
