@@ -202,3 +202,15 @@ textarea {
 .skills-marquee-section:hover .skills-track--right {
   animation-play-state: paused;
 }
+
+/* ── Hero Image Mobile Optimized ── */
+@layer utilities {
+  .hero-image-mobile-wrap {
+    @apply absolute top-[48%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none;
+  }
+
+  .hero-image-mobile-img {
+    @apply transition-transform duration-1000 pointer-events-auto;
+    filter: drop-shadow(0 0 40px rgba(56, 189, 248, 0.15));
+  }
+}

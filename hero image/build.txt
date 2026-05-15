@@ -179,3 +179,29 @@ Row 4:   [Music Player 6col] [Profile cont.] [Video cont.]
    - Use `ScrollTrigger.batch()` for grid items to ensure they animate even if rapid scrolling occurs or layout shifts.
    - Sync **Lenis** with **ScrollTrigger** by adding `lenis.on('scroll', ScrollTrigger.update)` and hooking `lenis.raf` into `gsap.ticker`.
    - Always ensure initial state (`opacity: 0`) is set via `gsap.set()` before animation to prevent FOUC or "black screen" issues.
+
+AUTHENTICATION SYSTEM:
+
+Create a secure login system:
+
+Route:
+- /admin/login
+
+Features:
+- Email + password login
+- JWT/session authentication
+- Protected routes (only logged-in user can access dashboard)
+- Redirect unauthorized users to login page
+
+Optional:
+- Store hashed password using bcrypt
+
+---
+
+ADMIN DASHBOARD STRUCTURE:
+
+Routes:
+- /admin/dashboard
+- /admin/projects
+- /admin/add-project
+- /admin/edit-project/[id]

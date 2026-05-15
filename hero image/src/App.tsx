@@ -41,6 +41,45 @@ interface TechItem {
   category: string;
 }
 
+interface Experience {
+  id: string;
+  role: string;
+  company: string;
+  period: string;
+  description: string;
+  skills: string[];
+}
+
+const INITIAL_EXPERIENCES: Experience[] = [
+  {
+    id: "1",
+    role: "AI/ML Engineering Intern",
+    company: "TechNova Solutions",
+    period: "2024 - PRESENT",
+    description:
+      "Developing robust RAG pipelines and fine-tuning Open-Source LLMs (Llama 3, Mistral) for enterprise-grade customer support automation.",
+    skills: ["LangChain", "VectorDB", "Llama 3"],
+  },
+  {
+    id: "2",
+    role: "Machine Learning Researcher",
+    company: "University AI Lab",
+    period: "2023 - 2024",
+    description:
+      "Conducted research on vision-language models for autonomous medical imaging analysis, achieving 15% improvement in diagnostic accuracy.",
+    skills: ["PyTorch", "Computer Vision", "VLM"],
+  },
+  {
+    id: "3",
+    role: "Junior Data Scientist",
+    company: "FutureSoft AI",
+    period: "2022 - 2023",
+    description:
+      "Engineered predictive models for retail inventory optimization and performed deep EDA to uncover market trends for B2B clients.",
+    skills: ["Scikit-learn", "Pandas", "SQL"],
+  },
+];
+
 interface Project {
   id: string;
   title: string;
@@ -384,6 +423,52 @@ function useProjects() {
   };
 
   return { projects, addProject, updateProject, deleteProject, resetProjects };
+}
+
+function useExperience() {
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("portfolio-experience");
+      if (saved) {
+        setExperiences(JSON.parse(saved));
+      } else {
+        localStorage.setItem(
+          "portfolio-experience",
+          JSON.stringify(INITIAL_EXPERIENCES),
+        );
+        setExperiences(INITIAL_EXPERIENCES);
+      }
+    } catch (err) {
+      console.error("Failed to load experiences:", err);
+      setExperiences(INITIAL_EXPERIENCES);
+    }
+  }, []);
+
+  const saveExperiences = (newExperiences: Experience[]) => {
+    localStorage.setItem("portfolio-experience", JSON.stringify(newExperiences));
+    setExperiences(newExperiences);
+  };
+
+  const addExperience = (experience: Omit<Experience, "id">) => {
+    const newExperience = { ...experience, id: Date.now().toString() };
+    saveExperiences([...experiences, newExperience]);
+  };
+
+  const updateExperience = (updated: Experience) => {
+    saveExperiences(experiences.map((e) => (e.id === updated.id ? updated : e)));
+  };
+
+  const deleteExperience = (id: string) => {
+    saveExperiences(experiences.filter((e) => e.id !== id));
+  };
+
+  const resetExperiences = () => {
+    saveExperiences(INITIAL_EXPERIENCES);
+  };
+
+  return { experiences, addExperience, updateExperience, deleteExperience, resetExperiences };
 }
 
 function SelectedWorks() {
@@ -1416,6 +1501,179 @@ function AdminEditProject() {
   );
 }
 
+function AdminExperience() {
+  const { experiences, deleteExperience } = useExperience();
+  const navigate = useNavigate();
+
+  return (
+    <DashboardShell title="Experience Manager">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {experiences.map((exp) => (
+          <div
+            key={exp.id}
+            className="glass-card flex flex-col rounded-3xl p-6 border border-white/10"
+          >
+            <h3 className="font-bold text-white mb-1">{exp.role}</h3>
+            <p className="text-xs text-sky-400 mb-2">{exp.company}</p>
+            <p className="text-xs text-slate-400 mb-6">{exp.period}</p>
+            <div className="mt-auto flex gap-2">
+              <button
+                onClick={() => navigate(`/admin/edit-experience/${exp.id}`)}
+                className="flex-1 rounded-xl bg-white/5 py-2 text-xs font-bold transition hover:bg-white/10"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deleteExperience(exp.id)}
+                className="flex-1 rounded-xl bg-rose-500/20 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/30"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </DashboardShell>
+  );
+}
+
+function ExperienceForm({
+  initialData,
+  onSubmit,
+}: {
+  initialData?: Experience;
+  onSubmit: (data: any) => void;
+}) {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    role: initialData?.role || "",
+    company: initialData?.company || "",
+    period: initialData?.period || "",
+    description: initialData?.description || "",
+    skills: initialData?.skills?.join(", ") || "",
+  });
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      skills: formData.skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s),
+    });
+    navigate("/admin/experience");
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="glass-card rounded-[2rem] p-8 border border-white/10 space-y-6"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Role
+          <input
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+            value={formData.role}
+            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            required
+          />
+        </label>
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Company
+          <input
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+            value={formData.company}
+            onChange={(e) =>
+              setFormData({ ...formData, company: e.target.value })
+            }
+            required
+          />
+        </label>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Period
+          <input
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+            value={formData.period}
+            onChange={(e) =>
+              setFormData({ ...formData, period: e.target.value })
+            }
+            placeholder="e.g. 2024 - PRESENT"
+            required
+          />
+        </label>
+        <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+          Skills (comma separated)
+          <input
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition"
+            value={formData.skills}
+            onChange={(e) =>
+              setFormData({ ...formData, skills: e.target.value })
+            }
+            placeholder="React, Next.js, TypeScript..."
+            required
+          />
+        </label>
+      </div>
+      <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
+        Description
+        <textarea
+          className="mt-2 w-full h-24 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400 transition resize-none"
+          value={formData.description}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
+          required
+        />
+      </label>
+      <div className="flex justify-end gap-4 pt-2">
+        <button
+          type="button"
+          onClick={() => navigate("/admin/experience")}
+          className="px-8 py-3 rounded-2xl bg-white/5 font-bold uppercase tracking-widest transition hover:bg-white/10"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400"
+        >
+          {initialData ? "Update Experience" : "Create Experience"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function AdminAddExperience() {
+  const { addExperience } = useExperience();
+  return (
+    <DashboardShell title="Add New Experience">
+      <ExperienceForm onSubmit={addExperience} />
+    </DashboardShell>
+  );
+}
+
+function AdminEditExperience() {
+  const { id } = useParams();
+  const { experiences, updateExperience } = useExperience();
+  const experience = experiences.find((e) => e.id === id);
+
+  if (!experience) return null;
+
+  return (
+    <DashboardShell title="Edit Experience">
+      <ExperienceForm
+        initialData={experience}
+        onSubmit={(data) => updateExperience({ ...data, id })}
+      />
+    </DashboardShell>
+  );
+}
+
 function DashboardShell({
   title,
   children,
@@ -1435,7 +1693,7 @@ function DashboardShell({
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-white">{title}</h1>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
             <button
               onClick={() => navigate("/")}
               className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
@@ -1447,6 +1705,12 @@ function DashboardShell({
               className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
             >
               Projects
+            </button>
+            <button
+              onClick={() => navigate("/admin/experience")}
+              className="rounded-2xl bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+            >
+              Experience
             </button>
             <button
               onClick={() => navigate("/admin/add-project")}
@@ -1660,34 +1924,36 @@ function AppHeroSection() {
 
         <FloatingProjects />
 
-        <div className="relative z-20 w-full max-w-[90rem] mx-auto px-6 md:px-10 h-full flex flex-col justify-end items-center md:items-start text-center md:text-left pb-16 md:pb-32">
+        <div className="relative z-20 w-full max-w-[90rem] mx-auto px-6 md:px-10 h-full flex flex-col justify-end items-start md:items-start text-left md:text-left pb-44 md:pb-32">
           {/* Top Navigation Links */}
-          <div className="absolute top-8 right-6 md:right-10 flex gap-6 text-xs uppercase tracking-[0.3em] text-white/60 md:text-sm z-30">
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-10 flex items-center gap-3 md:gap-6 text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/80 md:text-white/60 md:text-sm z-30 w-max">
             <a
-              href="https://linkedin.com"
+              href="https://www.linkedin.com/in/rahul-yadav-194969327"
               target="_blank"
               rel="noreferrer"
               className="hover:text-sky-400 transition-colors duration-300"
             >
               LinkedIn
             </a>
+            <span className="md:hidden text-sky-500/50">•</span>
             <a
-              href="mailto:hello@example.com"
+              href="mailto:ry2702763@gmail.com"
               className="hover:text-sky-400 transition-colors duration-300"
             >
               Email
             </a>
           </div>
-          <div className="max-w-xl space-y-4 md:space-y-6">
+          <div className="max-w-xl space-y-3 md:space-y-6 relative z-40 w-full text-left md:text-left pt-20 md:pt-0">
             {/* Label with minimalist accent */}
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="flex items-center justify-center md:justify-start gap-3 text-sky-400 font-bold uppercase tracking-[0.3em] text-[10px] md:text-xs"
+              className="flex items-center justify-start gap-3 font-serif md:font-sans md:font-bold md:uppercase tracking-widest md:tracking-[0.3em] text-white md:text-sky-400 text-2xl md:text-[10px] lg:text-xs"
             >
-              <span className="w-10 h-[1px] bg-sky-500/50"></span>
-              AI/ML Engineer
+              <span className="hidden md:block w-10 h-[1px] bg-sky-500/50"></span>
+              <span className="md:hidden">AI/ML ENGINEER</span>
+              <span className="hidden md:inline">AI/ML Engineer</span>
             </motion.div>
 
             {/* Minimalist Description Paragraph */}
@@ -1695,19 +1961,19 @@ function AppHeroSection() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-slate-300 text-sm md:text-base font-normal leading-relaxed tracking-wide max-w-md opacity-90 mx-auto md:mx-0"
+              className="text-slate-300 text-[11px] md:text-base font-normal leading-relaxed tracking-wide max-w-[280px] md:max-w-md opacity-90 mx-0"
             >
               Designing immersive systems, adaptive interfaces, and future-ready
               product experiences with vision-first media and responsive AI
               workflows.
             </motion.p>
 
-            {/* Refined Scroll Indicator */}
+            {/* Refined Scroll Indicator (Desktop Only) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex items-center justify-center md:justify-start gap-4 pt-4"
+              className="hidden md:flex items-center justify-start gap-4 pt-4"
             >
               <div className="flex h-10 w-6 items-end justify-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
                 <span className="block h-2 w-2 rounded-full bg-sky-400 animate-bounce mb-1.5" />
@@ -1719,30 +1985,39 @@ function AppHeroSection() {
           </div>
         </div>
 
-        {/* Foreground Image - Responsive Handling */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
-          className="absolute bottom-0 left-[5%] md:left-auto md:translate-x-0 md:right-0 lg:right-[5%] z-10 block w-[68vw] max-w-[68vw] h-[64vh] md:w-auto md:max-w-none md:h-[85vh] pointer-events-none opacity-90 md:opacity-100"
-        >
-          <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-3/4 h-1/2 bg-sky-500/20 blur-[60px] md:blur-[100px] rounded-full animate-pulse" />
-          <img
-            src="/hero%20section/hero%20image.png.png"
-            alt="Hero Profile"
-            className="relative z-20 h-full w-full object-contain object-left-bottom md:object-contain md:object-bottom filter md:drop-shadow-[0_0_30px_rgba(56,189,248,0.2)] pointer-events-auto transition-transform duration-700"
-          />
-        </motion.div>
+        {/* Mobile Cyan Down Arrow */}
+        <div className="md:hidden absolute right-6 bottom-[6rem] z-30 flex flex-col items-center animate-bounce text-sky-400">
+           <svg width="24" height="40" viewBox="0 0 24 40" fill="none" stroke="currentColor" strokeWidth="1.5">
+             <path d="M12 0 L12 38 M4 30 L12 38 L20 30" />
+           </svg>
+        </div>
+
+        {/* Foreground Image - Desktop aligned right bottom, Mobile centered */}
+        <div className="hero-image-mobile-wrap w-[100vw] h-[85vh] md:w-auto md:h-[85vh] md:absolute md:bottom-0 md:left-auto md:right-0 lg:right-[5%] md:z-10 md:block md:pointer-events-none md:top-auto md:translate-x-0 md:translate-y-0">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+            className="w-full h-full"
+          >
+            <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-3/4 h-1/2 bg-sky-500/20 blur-[60px] md:blur-[100px] rounded-full animate-pulse md:hidden" />
+            <img
+              src="/hero%20section/hero%20image.png.png"
+              alt="Hero Profile"
+              className="hero-image-mobile-img w-full h-full object-cover object-bottom scale-110 md:scale-100 md:object-contain md:relative md:z-20 md:w-auto pointer-events-auto filter drop-shadow-[0_0_30px_rgba(56,189,248,0.2)]"
+            />
+          </motion.div>
+        </div>
 
         {/* ── AI Skills Marquee ── */}
-        <div className="skills-marquee-section absolute bottom-0 left-0 right-0 z-20 overflow-hidden bg-slate-950/80 py-4 md:py-6 backdrop-blur-md border-t border-white/5">
+        <div className="skills-marquee-section absolute bottom-0 left-0 right-0 z-20 overflow-hidden bg-slate-950/80 py-3 md:py-6 backdrop-blur-md border-t border-white/5 border-b md:border-b-0 border-b-white/5">
           {/* Fade edges */}
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 md:w-32 bg-gradient-to-r from-[#020308] to-transparent" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 md:w-32 bg-gradient-to-l from-[#020308] to-transparent" />
 
           <div className="skills-track skills-track--left flex whitespace-nowrap">
             {Array.from({ length: 2 }).map((_, copy) => (
-              <div key={copy} className="flex shrink-0 items-center gap-4 pr-4">
+              <div key={copy} className="flex shrink-0 items-center gap-3 md:gap-4 pr-3 md:pr-4">
                 {[
                   "PYTHON",
                   "GENERATIVE AI",
@@ -1763,12 +2038,46 @@ function AppHeroSection() {
                 ].map((skill) => (
                   <span
                     key={`${skill}-${copy}`}
-                    className="flex items-center gap-4"
+                    className="flex items-center gap-3 md:gap-4"
                   >
-                    <span className="skills-text text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-wider">
+                    <span className="skills-text text-[22px] md:text-4xl lg:text-5xl font-black uppercase tracking-wider">
                       {skill}
                     </span>
-                    <span className="skills-dot block h-2 w-2 md:h-3 md:w-3 shrink-0 rounded-full bg-sky-400/60" />
+                    <span className="skills-dot block h-1.5 w-1.5 md:h-3 md:w-3 shrink-0 rounded-full bg-sky-400/60" />
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+             <div className="skills-track skills-track--right flex whitespace-nowrap mt-1.5 md:mt-3">
+            {Array.from({ length: 2 }).map((_, copy) => (
+              <div key={copy} className="flex shrink-0 items-center gap-3 md:gap-4 pr-3 md:pr-4">
+                {[
+                  "AWS",
+                  "AZURE",
+                  "COMPUTER VISION",
+                  "NLP",
+                  "TRANSFORMERS",
+                  "PYTHON",
+                  "GENERATIVE AI",
+                  "AGENTIC AI",
+                  "LLM ORCHESTRATION",
+                  "PYTORCH",
+                  "TENSORFLOW",
+                  "PANDAS",
+                  "NUMPY",
+                  "LANGCHAIN",
+                  "LANGGRAPH",
+                  "RAG PIPELINES",
+                ].map((skill) => (
+                  <span
+                    key={`${skill}-right-${copy}`}
+                    className="flex items-center gap-3"
+                  >
+                    <span className="skills-text text-[22px] font-black uppercase tracking-wider">
+                      {skill}
+                    </span>
+                    <span className="skills-dot block h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/60" />
                   </span>
                 ))}
               </div>
@@ -1873,32 +2182,7 @@ function AppHeroSection() {
 }
 
 function ExperienceSection() {
-  const experiences = [
-    {
-      role: "AI/ML Engineering Intern",
-      company: "TechNova Solutions",
-      period: "2024 - PRESENT",
-      description:
-        "Developing robust RAG pipelines and fine-tuning Open-Source LLMs (Llama 3, Mistral) for enterprise-grade customer support automation.",
-      skills: ["LangChain", "VectorDB", "Llama 3"],
-    },
-    {
-      role: "Machine Learning Researcher",
-      company: "University AI Lab",
-      period: "2023 - 2024",
-      description:
-        "Conducted research on vision-language models for autonomous medical imaging analysis, achieving 15% improvement in diagnostic accuracy.",
-      skills: ["PyTorch", "Computer Vision", "VLM"],
-    },
-    {
-      role: "Junior Data Scientist",
-      company: "FutureSoft AI",
-      period: "2022 - 2023",
-      description:
-        "Engineered predictive models for retail inventory optimization and performed deep EDA to uncover market trends for B2B clients.",
-      skills: ["Scikit-learn", "Pandas", "SQL"],
-    },
-  ];
+  const { experiences } = useExperience();
 
   return (
     <section className="bg-[#020308] py-32 px-6 md:px-12 relative overflow-hidden">
@@ -1972,7 +2256,7 @@ function AdminDashboard() {
 
   return (
     <DashboardShell title="Admin Dashboard">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="glass-card p-8 rounded-[2rem] border border-white/10">
           <h3 className="text-xl font-bold text-white mb-2">
             Projects Management
@@ -2034,6 +2318,44 @@ function AdminDashboard() {
               className="w-full py-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase tracking-widest transition hover:bg-red-500/20"
             >
               Reset Stack
+            </button>
+          </div>
+        </div>
+
+        <div className="glass-card p-8 rounded-[2rem] border border-white/10">
+          <h3 className="text-xl font-bold text-white mb-2">
+            Experience Management
+          </h3>
+          <p className="text-slate-400 text-sm mb-6">
+            Update your work history, add new roles, and refine your timeline.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate("/admin/experience")}
+              className="w-full py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400"
+            >
+              Go to Experience
+            </button>
+            <button
+              onClick={() => navigate("/admin/add-experience")}
+              className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest transition hover:bg-white/10"
+            >
+              Add Experience
+            </button>
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "This will reset your experience to defaults. Continue?",
+                  )
+                ) {
+                  localStorage.removeItem("portfolio-experience");
+                  window.location.reload();
+                }
+              }}
+              className="w-full py-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase tracking-widest transition hover:bg-red-500/20 text-xs mt-3"
+            >
+              Reset Experience
             </button>
           </div>
         </div>
@@ -2260,6 +2582,30 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <AdminEditProject />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/experience"
+              element={
+                <ProtectedRoute>
+                  <AdminExperience />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/add-experience"
+              element={
+                <ProtectedRoute>
+                  <AdminAddExperience />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/edit-experience/:id"
+              element={
+                <ProtectedRoute>
+                  <AdminEditExperience />
                 </ProtectedRoute>
               }
             />
