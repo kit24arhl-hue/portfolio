@@ -2393,6 +2393,155 @@ function FloatingProjects() {
   );
 }
 
+function Footer() {
+  const currentYear = new Date().getFullYear();
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <footer className="bg-[#020308] pt-16 pb-8 px-6 md:px-12 border-t border-white/5 relative overflow-hidden md:h-[50vh] flex flex-col justify-center">
+      {/* Background Glow */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/5 blur-[120px] rounded-full pointer-events-none" />
+      
+      <div className="max-w-[90rem] mx-auto relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="space-y-8"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-px bg-sky-500/50" />
+              <span className="text-[10px] uppercase tracking-[0.4em] text-sky-500 font-bold">Contact</span>
+            </div>
+            
+            <h2 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+              Let's build <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-sky-200 to-sky-400">
+                something great together
+              </span>
+            </h2>
+            
+            <p className="text-slate-400 text-base md:text-lg max-w-md leading-relaxed">
+              Ready to pioneer the next generation of AI-driven interfaces? Let's collaborate and bring your vision to life.
+            </p>
+            
+            <div className="flex flex-wrap gap-4 pt-2">
+              <motion.a
+                href="mailto:ry2702763@gmail.com"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-8 py-3.5 bg-sky-500 text-[#020308] font-bold rounded-xl transition-all duration-300 shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 uppercase tracking-wider text-xs"
+              >
+                Get in Touch
+              </motion.a>
+              
+              <motion.button
+                onClick={scrollToTop}
+                whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
+                whileTap={{ scale: 0.98 }}
+                className="px-8 py-3.5 bg-white/5 text-white font-bold rounded-xl border border-white/10 transition-all duration-300 uppercase tracking-wider text-xs"
+              >
+                Back to Top
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-12 lg:justify-items-end">
+            <div className="space-y-6">
+              <h3 className="text-xs uppercase tracking-[0.4em] text-slate-500 font-bold">Navigation</h3>
+              <ul className="space-y-4 text-sm">
+                {[
+                  { name: "Home", href: "#" },
+                  { name: "About", href: "#about" },
+                  { name: "Projects", href: "#projects-section" },
+                  { name: "Tech Stack", href: "#stack" },
+                ].map((link) => (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      className="text-slate-400 hover:text-sky-400 transition-all duration-300 flex items-center group"
+                    >
+                      <span className="w-0 group-hover:w-4 h-px bg-sky-500 mr-0 group-hover:mr-2 transition-all duration-300" />
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="space-y-6">
+              <h3 className="text-xs uppercase tracking-[0.4em] text-slate-500 font-bold">Socials</h3>
+              <ul className="space-y-4 text-sm">
+                {[
+                  {
+                    name: "GitHub",
+                    href: "https://github.com/rahulydv-python",
+                    icon: (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    name: "LinkedIn",
+                    href: "https://www.linkedin.com/in/rahul-yadav-194969327",
+                    icon: (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                      </svg>
+                    ),
+                  },
+                ].map((social) => (
+                  <li key={social.name}>
+                    <a
+                      href={social.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-slate-400 hover:text-sky-400 transition-all duration-300 flex items-center gap-3 group"
+                    >
+                      <span className="p-2 bg-white/5 rounded-lg group-hover:bg-sky-500/10 group-hover:text-sky-400 transition-all duration-300">
+                        {social.icon}
+                      </span>
+                      {social.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="space-y-6 col-span-2 md:col-span-1">
+              <h3 className="text-xs uppercase tracking-[0.4em] text-slate-500 font-bold">Location</h3>
+              <div className="flex items-center gap-3 text-slate-400 group">
+                <div className="p-2 bg-white/5 rounded-lg group-hover:bg-sky-500/10 group-hover:text-sky-400 transition-all duration-300">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p className="text-sm">Kathmandu, Nepal</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-xs text-slate-500 font-medium tracking-widest">
+            © {currentYear} RAHUL YADAV. ALL RIGHTS RESERVED.
+          </p>
+          <div className="flex items-center gap-8 text-[10px] uppercase tracking-[0.4em] text-slate-600">
+            <span>AI Engineer</span>
+            <span className="h-1 w-1 bg-sky-500/50 rounded-full" />
+            <span>UI/UX Designer</span>
+          </div>
+        </div>
+    </footer>
+  );
+}
+
 function AppHeroSection() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const taglineRef = useRef<HTMLDivElement | null>(null);
@@ -2439,27 +2588,27 @@ function AppHeroSection() {
           <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#020308] to-transparent" />
         </div>
 
+        <div className="absolute top-8 right-6 md:right-12 z-[100] flex items-center gap-3 md:gap-6 text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/80 md:text-white/60 md:text-sm w-max pointer-events-auto">
+          <a
+            href="https://www.linkedin.com/in/rahul-yadav-194969327"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-sky-400 transition-colors duration-300"
+          >
+            LinkedIn
+          </a>
+          <span className="text-sky-500/50">•</span>
+          <a
+            href="mailto:ry2702763@gmail.com"
+            className="hover:text-sky-400 transition-colors duration-300"
+          >
+            Email
+          </a>
+        </div>
+
         <FloatingProjects />
 
         <div className="relative z-20 w-full max-w-[90rem] mx-auto px-6 md:px-10 h-full flex flex-col justify-end items-start md:items-start text-left md:text-left pb-44 md:pb-32">
-          {/* Top Navigation Links */}
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-10 flex items-center gap-3 md:gap-6 text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/80 md:text-white/60 md:text-sm z-30 w-max">
-            <a
-              href="https://www.linkedin.com/in/rahul-yadav-194969327"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-sky-400 transition-colors duration-300"
-            >
-              LinkedIn
-            </a>
-            <span className="md:hidden text-sky-500/50">•</span>
-            <a
-              href="mailto:ry2702763@gmail.com"
-              className="hover:text-sky-400 transition-colors duration-300"
-            >
-              Email
-            </a>
-          </div>
           <div className="max-w-xl space-y-3 md:space-y-6 relative z-40 w-full text-left md:text-left pt-20 md:pt-0">
             {/* Label with minimalist accent */}
             <motion.div
@@ -2510,7 +2659,7 @@ function AppHeroSection() {
         </div>
 
         {/* Foreground Image - Desktop aligned right bottom, Mobile centered */}
-        <div className="hero-image-mobile-wrap w-[100vw] h-[85vh] md:w-auto md:h-[85vh] md:absolute md:bottom-0 md:left-auto md:right-0 lg:right-[5%] md:z-10 md:block md:pointer-events-none md:top-auto md:translate-x-0 md:translate-y-0">
+        <div className="hero-image-mobile-wrap w-[100vw] h-[85vh] md:w-auto md:h-auto md:absolute md:bottom-[90px] md:left-auto md:right-0 lg:right-[5%] md:relative md:z-[70] md:block md:pointer-events-none md:top-auto md:translate-x-0 md:translate-y-0">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -2521,13 +2670,13 @@ function AppHeroSection() {
             <img
               src="/hero%20section/hero%20image.png.png"
               alt="Hero Profile"
-              className="hero-image-mobile-img w-full h-full object-cover object-bottom scale-110 md:scale-100 md:object-contain md:relative md:z-20 md:w-auto pointer-events-auto filter drop-shadow-[0_0_30px_rgba(56,189,248,0.2)]"
+              className="hero-image-mobile-img w-full h-full object-cover object-bottom scale-110 md:w-auto md:h-[125vh] md:object-contain md:scale-150 md:origin-bottom md:relative md:z-50 pointer-events-none filter drop-shadow-[0_0_30px_rgba(56,189,248,0.2)]"
             />
           </motion.div>
         </div>
 
         {/* ── AI Skills Marquee ── */}
-        <div className="skills-marquee-section absolute bottom-0 left-0 right-0 z-20 overflow-hidden bg-slate-950/80 py-3 md:py-6 backdrop-blur-md border-t border-white/5 border-b md:border-b-0 border-b-white/5">
+        <div className="skills-marquee-section absolute bottom-0 left-0 right-0 z-[60] overflow-hidden bg-slate-950/90 py-3 md:py-6 border-t border-white/5 border-b md:border-b-0 border-b-white/5">
           {/* Fade edges */}
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 md:w-32 bg-gradient-to-r from-[#020308] to-transparent" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 md:w-32 bg-gradient-to-l from-[#020308] to-transparent" />
@@ -2604,7 +2753,7 @@ function AppHeroSection() {
       </section>
 
       {/* ── Profile & About Section ── */}
-      <section className="bg-[#020308] px-6 py-4 text-slate-100 md:px-12">
+      <section id="about" className="bg-[#020308] px-6 py-4 text-slate-100 md:px-12">
         <div className="mx-auto max-w-5xl">
           {/* Tagline Section */}
           <div
@@ -2687,19 +2836,26 @@ function AppHeroSection() {
       <AIToolsMarquee />
 
       {/* ── Selected Works Section ── */}
-      <SelectedWorks />
+      <div id="projects-section">
+        <SelectedWorks />
+      </div>
 
       {/* ── Tech Arsenal Section ── */}
-      <TechStackGrid />
+      <div id="stack">
+        <TechStackGrid />
+      </div>
 
       {/* ── Experience Section ── */}
-      <ExperienceSection />
+      <div id="exp">
+        <ExperienceSection />
+      </div>
 
       {/* ── Certifications Section ── */}
       <CertificationsSection />
 
       {/* ── Learning Journey Section ── */}
       <LearningJourneySection />
+      <Footer />
     </div>
   );
 }
