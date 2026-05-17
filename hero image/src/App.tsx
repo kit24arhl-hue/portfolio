@@ -21,6 +21,8 @@ import {
 } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { supabase, uploadImage } from "./lib/supabase";
+import { AuthProvider, useAuth } from "./lib/AuthContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -429,82 +431,136 @@ const INITIAL_TECHS: TechItem[] = [
 ];
 
 function useTechStack() {
-  const [techs, setTechs] = useState<TechItem[]>(() => {
-    try {
-      const saved = localStorage.getItem("portfolio_techs");
-      return saved ? JSON.parse(saved) : INITIAL_TECHS;
-    } catch (e) {
-      console.error("Failed to parse techs from localStorage", e);
-      return INITIAL_TECHS;
+  const [techs, setTechs] = useState<TechItem[]>([]);
+  const channelId = useRef(`skills-realtime-${crypto.randomUUID()}`);
+
+  const fetchTechs = async () => {
+    const { data, error } = await supabase
+      .from("skills")
+      .select("*")
+      .order("name", { ascending: true });
+    if (!error && data) {
+      setTechs(data as TechItem[]);
     }
-  });
-
-  const saveTechs = (newTechs: TechItem[]) => {
-    setTechs(newTechs);
-    localStorage.setItem("portfolio_techs", JSON.stringify(newTechs));
   };
 
-  const addTech = (tech: Omit<TechItem, "id">) => {
-    const newTech = { ...tech, id: Date.now().toString() };
-    saveTechs([...techs, newTech]);
+  useEffect(() => {
+    fetchTechs();
+
+    const channel = supabase
+      .channel(channelId.current)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "skills" },
+        () => {
+          fetchTechs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const addTech = async (tech: Omit<TechItem, "id">) => {
+    await supabase.from("skills").insert([tech]);
   };
 
-  const updateTech = (id: string, updatedTech: Partial<TechItem>) => {
-    saveTechs(techs.map((t) => (t.id === id ? { ...t, ...updatedTech } : t)));
+  const updateTech = async (id: string, updatedTech: Partial<TechItem>) => {
+    await supabase.from("skills").update(updatedTech).eq("id", id);
   };
 
-  const deleteTech = (id: string) => {
-    saveTechs(techs.filter((t) => t.id !== id));
+  const deleteTech = async (id: string) => {
+    await supabase.from("skills").delete().eq("id", id);
   };
 
-  const resetTechs = () => {
-    saveTechs(INITIAL_TECHS);
+  const resetTechs = async () => {
+    await supabase.from("skills").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    const toInsert = INITIAL_TECHS.map(({ id, ...rest }) => rest);
+    await supabase.from("skills").insert(toInsert);
   };
 
   return { techs, addTech, updateTech, deleteTech, resetTechs };
 }
 
+const mapProjectFromDB = (p: any): Project => ({
+  id: p.id,
+  title: p.title,
+  category: p.category || "",
+  year: p.year || "",
+  description: p.description || "",
+  image: p.image || "",
+  techStack: p.tech_stack || [],
+  hostedLink: p.live || "",
+  sourceLink: p.github || "",
+});
+
+const mapProjectToDB = (p: any) => ({
+  title: p.title,
+  category: p.category,
+  year: p.year,
+  description: p.description,
+  image: p.image,
+  tech_stack: p.techStack,
+  live: p.hostedLink,
+  github: p.sourceLink,
+});
+
 function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const channelId = useRef(`projects-realtime-${crypto.randomUUID()}`);
+
+  const fetchProjects = async () => {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) {
+      setProjects(data.map(mapProjectFromDB));
+    }
+  };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("portfolio-projects");
-      if (saved) {
-        setProjects(JSON.parse(saved));
-      } else {
-        localStorage.setItem(
-          "portfolio-projects",
-          JSON.stringify(INITIAL_PROJECTS),
-        );
-        setProjects(INITIAL_PROJECTS);
-      }
-    } catch (err) {
-      console.error("Failed to load projects:", err);
-      setProjects(INITIAL_PROJECTS);
-    }
+    fetchProjects();
+
+    const channel = supabase
+      .channel(channelId.current)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "projects" },
+        () => {
+          fetchProjects();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const saveProjects = (newProjects: Project[]) => {
-    localStorage.setItem("portfolio-projects", JSON.stringify(newProjects));
-    setProjects(newProjects);
+  const addProject = async (project: Omit<Project, "id">) => {
+    const dbProj = mapProjectToDB(project);
+    const { error } = await supabase.from("projects").insert([dbProj]);
+    if (error) { console.error("addProject:", error); alert(`Save failed: ${error.message}`); }
   };
 
-  const addProject = (project: Omit<Project, "id">) => {
-    const newProject = { ...project, id: Date.now().toString() };
-    saveProjects([...projects, newProject]);
+  const updateProject = async (updated: Project) => {
+    const dbProj = mapProjectToDB(updated);
+    const { error } = await supabase.from("projects").update(dbProj).eq("id", updated.id);
+    if (error) { console.error("updateProject:", error); alert(`Update failed: ${error.message}`); }
   };
 
-  const updateProject = (updated: Project) => {
-    saveProjects(projects.map((p) => (p.id === updated.id ? updated : p)));
+  const deleteProject = async (id: string) => {
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+    if (error) { console.error("deleteProject:", error); alert(`Delete failed: ${error.message}`); }
   };
 
-  const deleteProject = (id: string) => {
-    saveProjects(projects.filter((p) => p.id !== id));
-  };
-
-  const resetProjects = () => {
-    saveProjects(INITIAL_PROJECTS);
+  const resetProjects = async () => {
+    await supabase.from("projects").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    const toInsert = INITIAL_PROJECTS.map(p => mapProjectToDB(p));
+    await supabase.from("projects").insert(toInsert);
   };
 
   return { projects, addProject, updateProject, deleteProject, resetProjects };
@@ -512,131 +568,219 @@ function useProjects() {
 
 function useExperience() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const channelId = useRef(`experiences-realtime-${crypto.randomUUID()}`);
+
+  const fetchExperiences = async () => {
+    const { data, error } = await supabase
+      .from("experiences")
+      .select("*")
+      .order("created_at", { ascending: true });
+    if (!error && data) {
+      setExperiences(data as Experience[]);
+    }
+  };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("portfolio-experience");
-      if (saved) {
-        setExperiences(JSON.parse(saved));
-      } else {
-        localStorage.setItem(
-          "portfolio-experience",
-          JSON.stringify(INITIAL_EXPERIENCES),
-        );
-        setExperiences(INITIAL_EXPERIENCES);
-      }
-    } catch (err) {
-      console.error("Failed to load experiences:", err);
-      setExperiences(INITIAL_EXPERIENCES);
-    }
+    fetchExperiences();
+
+    const channel = supabase
+      .channel(channelId.current)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "experiences" },
+        () => {
+          fetchExperiences();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const saveExperiences = (newExperiences: Experience[]) => {
-    localStorage.setItem("portfolio-experience", JSON.stringify(newExperiences));
-    setExperiences(newExperiences);
+  const addExperience = async (experience: Omit<Experience, "id">) => {
+    const { error } = await supabase.from("experiences").insert([experience]);
+    if (error) { console.error("addExperience:", error); alert(`Save failed: ${error.message}`); }
   };
 
-  const addExperience = (experience: Omit<Experience, "id">) => {
-    const newExperience = { ...experience, id: Date.now().toString() };
-    saveExperiences([...experiences, newExperience]);
+  const updateExperience = async (updated: Experience) => {
+    const { id, ...rest } = updated;
+    const { error } = await supabase.from("experiences").update(rest).eq("id", id);
+    if (error) { console.error("updateExperience:", error); alert(`Update failed: ${error.message}`); }
   };
 
-  const updateExperience = (updated: Experience) => {
-    saveExperiences(experiences.map((e) => (e.id === updated.id ? updated : e)));
+  const deleteExperience = async (id: string) => {
+    const { error } = await supabase.from("experiences").delete().eq("id", id);
+    if (error) { console.error("deleteExperience:", error); alert(`Delete failed: ${error.message}`); }
   };
 
-  const deleteExperience = (id: string) => {
-    saveExperiences(experiences.filter((e) => e.id !== id));
-  };
-
-  const resetExperiences = () => {
-    saveExperiences(INITIAL_EXPERIENCES);
+  const resetExperiences = async () => {
+    await supabase.from("experiences").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    const toInsert = INITIAL_EXPERIENCES.map(({ id, ...rest }) => rest);
+    await supabase.from("experiences").insert(toInsert);
   };
 
   return { experiences, addExperience, updateExperience, deleteExperience, resetExperiences };
 }
 
+const mapCertFromDB = (c: any): Certification => ({
+  id: c.id,
+  title: c.title,
+  organization: c.issuer || c.organization || "",
+  date: c.date || "",
+  credentialId: c.credential_id || "",
+  skills: c.skills || [],
+  image: c.image || "",
+  url: c.link || c.url || "",
+  category: c.category || "",
+  featured: c.featured ?? false,
+});
+
+const mapCertToDB = (c: any) => ({
+  title: c.title,
+  issuer: c.organization,
+  organization: c.organization,
+  date: c.date,
+  credential_id: c.credentialId,
+  skills: c.skills,
+  image: c.image,
+  link: c.url,
+  url: c.url,
+  category: c.category,
+  featured: c.featured ?? false,
+});
+
 function useCertifications() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
+  const channelId = useRef(`certifications-realtime-${crypto.randomUUID()}`);
+
+  const fetchCertifications = async () => {
+    const { data, error } = await supabase
+      .from("certifications")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) {
+      setCertifications(data.map(mapCertFromDB));
+    }
+  };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("portfolio-certifications");
-      if (saved) {
-        setCertifications(JSON.parse(saved));
-      } else {
-        localStorage.setItem("portfolio-certifications", JSON.stringify(INITIAL_CERTIFICATIONS));
-        setCertifications(INITIAL_CERTIFICATIONS);
-      }
-    } catch (err) {
-      console.error("Failed to load certifications:", err);
-      setCertifications(INITIAL_CERTIFICATIONS);
-    }
+    fetchCertifications();
+
+    const channel = supabase
+      .channel(channelId.current)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "certifications" },
+        () => {
+          fetchCertifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const saveCertifications = (newCerts: Certification[]) => {
-    localStorage.setItem("portfolio-certifications", JSON.stringify(newCerts));
-    setCertifications(newCerts);
+  const addCertification = async (cert: Omit<Certification, "id">) => {
+    const dbCert = mapCertToDB(cert);
+    const { error } = await supabase.from("certifications").insert([dbCert]);
+    if (error) { console.error("addCertification:", error); alert(`Save failed: ${error.message}`); }
   };
 
-  const addCertification = (cert: Omit<Certification, "id">) => {
-    const newCert = { ...cert, id: Date.now().toString() };
-    saveCertifications([...certifications, newCert]);
+  const updateCertification = async (updated: Certification) => {
+    const dbCert = mapCertToDB(updated);
+    const { error } = await supabase.from("certifications").update(dbCert).eq("id", updated.id);
+    if (error) { console.error("updateCertification:", error); alert(`Update failed: ${error.message}`); }
   };
 
-  const updateCertification = (updated: Certification) => {
-    saveCertifications(certifications.map((c) => (c.id === updated.id ? updated : c)));
+  const deleteCertification = async (id: string) => {
+    const { error } = await supabase.from("certifications").delete().eq("id", id);
+    if (error) { console.error("deleteCertification:", error); alert(`Delete failed: ${error.message}`); }
   };
 
-  const deleteCertification = (id: string) => {
-    saveCertifications(certifications.filter((c) => c.id !== id));
-  };
-
-  const resetCertifications = () => {
-    saveCertifications(INITIAL_CERTIFICATIONS);
+  const resetCertifications = async () => {
+    await supabase.from("certifications").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    const toInsert = INITIAL_CERTIFICATIONS.map(c => mapCertToDB(c));
+    await supabase.from("certifications").insert(toInsert);
   };
 
   return { certifications, addCertification, updateCertification, deleteCertification, resetCertifications };
 }
 
+const mapLearningFromDB = (i: any): LearningItem => ({
+  id: i.id,
+  title: i.title,
+  type: i.type,
+  status: i.status,
+  technologies: i.technologies || [],
+  progressPercentage: i.progress_percentage || 0,
+});
+
+const mapLearningToDB = (i: any) => ({
+  title: i.title,
+  type: i.type,
+  status: i.status,
+  technologies: i.technologies,
+  progress_percentage: i.progressPercentage || 0,
+});
+
 function useLearningItems() {
   const [learningItems, setLearningItems] = useState<LearningItem[]>([]);
+  const channelId = useRef(`learning-items-realtime-${crypto.randomUUID()}`);
+
+  const fetchLearningItems = async () => {
+    const { data, error } = await supabase
+      .from("learning_items")
+      .select("*")
+      .order("created_at", { ascending: true });
+    if (!error && data) {
+      setLearningItems(data.map(mapLearningFromDB));
+    }
+  };
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("portfolio-learning-items");
-      if (saved) {
-        setLearningItems(JSON.parse(saved));
-      } else {
-        localStorage.setItem("portfolio-learning-items", JSON.stringify(INITIAL_LEARNING_ITEMS));
-        setLearningItems(INITIAL_LEARNING_ITEMS);
-      }
-    } catch (err) {
-      console.error("Failed to load learning items:", err);
-      setLearningItems(INITIAL_LEARNING_ITEMS);
-    }
+    fetchLearningItems();
+
+    const channel = supabase
+      .channel(channelId.current)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "learning_items" },
+        () => {
+          fetchLearningItems();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const saveLearningItems = (newItems: LearningItem[]) => {
-    localStorage.setItem("portfolio-learning-items", JSON.stringify(newItems));
-    setLearningItems(newItems);
+  const addLearningItem = async (item: Omit<LearningItem, "id">) => {
+    const dbItem = mapLearningToDB(item);
+    const { error } = await supabase.from("learning_items").insert([dbItem]);
+    if (error) { console.error("addLearningItem:", error); alert(`Save failed: ${error.message}`); }
   };
 
-  const addLearningItem = (item: Omit<LearningItem, "id">) => {
-    const newItem = { ...item, id: Date.now().toString() };
-    saveLearningItems([...learningItems, newItem]);
+  const updateLearningItem = async (updated: LearningItem) => {
+    const dbItem = mapLearningToDB(updated);
+    const { error } = await supabase.from("learning_items").update(dbItem).eq("id", updated.id);
+    if (error) { console.error("updateLearningItem:", error); alert(`Update failed: ${error.message}`); }
   };
 
-  const updateLearningItem = (updated: LearningItem) => {
-    saveLearningItems(learningItems.map((i) => (i.id === updated.id ? updated : i)));
+  const deleteLearningItem = async (id: string) => {
+    const { error } = await supabase.from("learning_items").delete().eq("id", id);
+    if (error) { console.error("deleteLearningItem:", error); alert(`Delete failed: ${error.message}`); }
   };
 
-  const deleteLearningItem = (id: string) => {
-    saveLearningItems(learningItems.filter((i) => i.id !== id));
-  };
-
-  const resetLearningItems = () => {
-    saveLearningItems(INITIAL_LEARNING_ITEMS);
+  const resetLearningItems = async () => {
+    await supabase.from("learning_items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    const toInsert = INITIAL_LEARNING_ITEMS.map(i => mapLearningToDB(i));
+    await supabase.from("learning_items").insert(toInsert);
   };
 
   return { learningItems, addLearningItem, updateLearningItem, deleteLearningItem, resetLearningItems };
@@ -1229,47 +1373,189 @@ function TechStackGrid() {
 }
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const authToken = sessionStorage.getItem("portfolio-auth");
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (!authToken) {
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#020308] text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-500 border-t-transparent"></div>
+          <span className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Loading Session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
   return children;
 }
 
+function ForgotPasswordLink() {
+  const [open, setOpen] = useState(false);
+  const [fpEmail, setFpEmail] = useState("");
+  const [fpStatus, setFpStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [fpError, setFpError] = useState("");
+
+  const handleReset = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFpStatus("sending");
+    setFpError("");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(fpEmail, {
+      redirectTo: `${window.location.origin}/admin/reset-password`,
+    });
+
+    if (error) {
+      setFpError(error.message);
+      setFpStatus("error");
+    } else {
+      setFpStatus("sent");
+    }
+  };
+
+  return (
+    <>
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => { setOpen(true); setFpStatus("idle"); setFpEmail(""); setFpError(""); }}
+          className="text-sm text-sky-400 hover:text-sky-300 transition-colors underline underline-offset-4"
+        >
+          Forgot password?
+        </button>
+      </div>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
+        >
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0a0f1e] p-8 shadow-2xl space-y-6 animate-fade-in">
+            {fpStatus === "sent" ? (
+              <div className="flex flex-col items-center gap-4 text-center py-4">
+                <div className="w-16 h-16 rounded-full bg-sky-500/10 border border-sky-500/30 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-1">Check your inbox</h2>
+                  <p className="text-slate-400 text-sm">
+                    A password reset link has been sent to <span className="text-sky-300 font-medium">{fpEmail}</span>. Follow the link in your email to reset your password.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="mt-2 px-6 py-2.5 rounded-xl bg-sky-500 text-slate-950 text-sm font-semibold hover:bg-sky-400 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold text-white">Reset Password</h2>
+                  <p className="text-slate-400 text-sm">
+                    Enter your account email and we'll send you a secure reset link.
+                  </p>
+                </div>
+                <form onSubmit={handleReset} className="space-y-4">
+                  <label className="block text-sm text-slate-200">
+                    Email address
+                    <input
+                      type="email"
+                      required
+                      value={fpEmail}
+                      onChange={(e) => setFpEmail(e.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-sky-400"
+                      placeholder="your@email.com"
+                    />
+                  </label>
+                  {fpStatus === "error" && (
+                    <p className="text-sm text-rose-400">{fpError}</p>
+                  )}
+                  <div className="flex gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300 hover:bg-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={fpStatus === "sending"}
+                      className="flex-1 rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-sky-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {fpStatus === "sending" ? "Sending..." : "Send Reset Link"}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const from =
     (location.state as { from?: Location })?.from?.pathname ||
     "/admin/dashboard";
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (
-      email.toLowerCase() === "admin@example.com" &&
-      password === "password123"
-    ) {
-      const token = btoa(`${email}:${Date.now()}`);
-      sessionStorage.setItem("portfolio-auth", token);
+  useEffect(() => {
+    if (user && !authLoading) {
       navigate(from, { replace: true });
+    }
+  }, [user, authLoading, navigate, from]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError(signInError.message);
+      setSubmitting(false);
       return;
     }
 
-    setError(
-      "Login failed. Use admin@example.com / password123 for demo access.",
-    );
+    navigate(from, { replace: true });
   };
 
+  if (authLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#020308] text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-500 border-t-transparent"></div>
+          <span className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Loading Auth...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-black px-6 py-16 text-slate-100 md:px-12">
-      <div className="mx-auto max-w-xl space-y-8 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow">
+    <main className="min-h-screen bg-[#020308] px-6 py-16 text-slate-100 md:px-12 flex items-center justify-center">
+      <div className="mx-auto w-full max-w-xl space-y-8 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow">
         <div className="space-y-3">
           <p className="text-sm uppercase tracking-[0.35em] text-sky-300">
             Admin Access
@@ -1277,9 +1563,8 @@ function LoginPage() {
           <h1 className="text-3xl font-semibold text-white">
             Secure Dashboard Login
           </h1>
-          <p className="text-slate-400">
-            This demo uses a local session token and protected client-side
-            routes.
+          <p className="text-slate-400 text-sm">
+            Enter your administrator credentials to access the content management system.
           </p>
         </div>
         <form className="space-y-5" onSubmit={handleSubmit}>
@@ -1303,11 +1588,15 @@ function LoginPage() {
               required
             />
           </label>
-          {error && <p className="text-sm text-rose-300">{error}</p>}
-          <button className="w-full rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:bg-sky-400">
-            Log in
+          {error && <p className="text-sm text-rose-400">{error}</p>}
+          <button 
+            disabled={submitting}
+            className="w-full rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-950 transition hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting ? "Logging in..." : "Log in"}
           </button>
         </form>
+        <ForgotPasswordLink />
       </div>
     </main>
   );
@@ -1512,6 +1801,7 @@ function AdminProjects() {
     </DashboardShell>
   );
 }
+
 function ProjectForm({
   initialData,
   onSubmit,
@@ -1520,6 +1810,7 @@ function ProjectForm({
   onSubmit: (data: any) => void;
 }) {
   const navigate = useNavigate();
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
     category: initialData?.category || "",
@@ -1531,15 +1822,19 @@ function ProjectForm({
     sourceLink: initialData?.sourceLink || "",
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.onerror = () => console.error("File reading failed");
-      reader.readAsDataURL(file);
+      setUploading(true);
+      try {
+        const url = await uploadImage(file);
+        setFormData((prev) => ({ ...prev, image: url }));
+      } catch (err: any) {
+        console.error("Image upload failed:", err);
+        alert(`Image upload failed: ${err.message || err}`);
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
@@ -1628,8 +1923,10 @@ function ProjectForm({
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-sky-500/10 file:text-sky-400 hover:file:bg-sky-500/20 cursor-pointer"
+                disabled={uploading}
+                className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-sky-500/10 file:text-sky-400 hover:file:bg-sky-500/20 cursor-pointer disabled:opacity-50"
               />
+              {uploading && <span className="text-xs text-sky-400 animate-pulse">Uploading...</span>}
             </div>
             <p className="text-[10px] text-slate-500 mt-1">
               Or paste a URL below:
@@ -1699,9 +1996,10 @@ function ProjectForm({
         </button>
         <button
           type="submit"
-          className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400"
+          disabled={uploading}
+          className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {initialData ? "Update Project" : "Create Project"}
+          {uploading ? "Uploading..." : initialData ? "Update" : "Create"}
         </button>
       </div>
     </form>
@@ -1968,6 +2266,7 @@ function CertificationForm({
   onSubmit: (data: any) => void;
 }) {
   const navigate = useNavigate();
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
     organization: initialData?.organization || "",
@@ -1979,6 +2278,22 @@ function CertificationForm({
     category: initialData?.category || "AI/ML",
     featured: initialData?.featured || false,
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploading(true);
+      try {
+        const url = await uploadImage(file);
+        setFormData((prev) => ({ ...prev, image: url }));
+      } catch (err: any) {
+        console.error("Image upload failed:", err);
+        alert(`Image upload failed: ${err.message || err}`);
+      } finally {
+        setUploading(false);
+      }
+    }
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -2030,8 +2345,30 @@ function CertificationForm({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
-          Image URL
-          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-sky-400" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} required />
+          Certification Image
+          <div className="mt-2 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-slate-900 border border-white/10 overflow-hidden shrink-0">
+              {formData.image ? (
+                <img src={formData.image} className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-slate-600">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+              className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-sky-500/10 file:text-sky-400 hover:file:bg-sky-500/20 cursor-pointer disabled:opacity-50"
+            />
+            {uploading && <span className="text-xs text-sky-400 animate-pulse">Uploading...</span>}
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1">Or paste a URL below:</p>
+          <input className="mt-1 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-2 text-white outline-none focus:border-sky-400 transition text-sm" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} placeholder="https://..." required />
         </label>
         <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest">
           Verification URL
@@ -2044,7 +2381,7 @@ function CertificationForm({
       </label>
       <div className="flex justify-end gap-4 pt-2">
         <button type="button" onClick={() => navigate("/admin/certifications")} className="px-8 py-3 rounded-2xl bg-white/5 font-bold uppercase tracking-widest transition hover:bg-white/10">Cancel</button>
-        <button type="submit" className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400">{initialData ? "Update" : "Create"}</button>
+        <button type="submit" disabled={uploading} className="px-8 py-3 rounded-2xl bg-sky-500 text-slate-950 font-bold uppercase tracking-widest transition hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed">{uploading ? "Uploading..." : initialData ? "Update" : "Create"}</button>
       </div>
     </form>
   );
@@ -2187,6 +2524,7 @@ function DashboardShell({
   children?: ReactNode;
 }) {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   return (
     <main className="min-h-screen bg-[#020308] px-6 py-10 text-slate-100 md:px-12">
@@ -2234,6 +2572,15 @@ function DashboardShell({
               className="rounded-2xl bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
             >
               Add Project
+            </button>
+            <button
+              onClick={async () => {
+                await signOut();
+                navigate("/admin/login");
+              }}
+              className="rounded-2xl bg-rose-500/10 px-4 py-2 text-sm text-rose-300 transition hover:bg-rose-500/20 border border-rose-500/20"
+            >
+              Logout
             </button>
           </div>
         </div>
@@ -3595,7 +3942,8 @@ class ErrorBoundary extends React.Component<
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
         <CustomCursor />
         <AnimatePresence mode="wait">
           <Routes>
@@ -3718,6 +4066,7 @@ export default function App() {
           </Routes>
         </AnimatePresence>
       </BrowserRouter>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
