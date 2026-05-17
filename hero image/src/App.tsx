@@ -2401,143 +2401,134 @@ function Footer() {
   };
 
   return (
-    <footer className="bg-[#020308] pt-16 pb-8 px-6 md:px-12 border-t border-white/5 relative overflow-hidden md:h-[50vh] flex flex-col justify-center">
-      {/* Background Glow */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/5 blur-[120px] rounded-full pointer-events-none" />
+    <footer className="bg-[#020308] pt-24 pb-12 px-6 md:px-12 border-t border-white/5 relative overflow-hidden lg:h-[60vh] flex flex-col justify-between">
+      {/* Dynamic Background Elements */}
+      <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-sky-500/5 blur-[100px] rounded-full pointer-events-none will-change-transform" />
+      <div className="absolute -bottom-24 -right-24 w-[400px] h-[400px] bg-indigo-500/5 blur-[80px] rounded-full pointer-events-none will-change-transform" />
       
-      <div className="max-w-[90rem] mx-auto relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16">
+      <div className="max-w-[90rem] mx-auto w-full relative z-10 flex-1 flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          {/* CTA Section */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="space-y-8"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="space-y-10"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-px bg-sky-500/50" />
-              <span className="text-[10px] uppercase tracking-[0.4em] text-sky-500 font-bold">Contact</span>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-px bg-gradient-to-r from-sky-500 to-transparent" />
+                <span className="text-[10px] uppercase tracking-[0.5em] text-sky-400 font-black">Get in Touch</span>
+              </div>
+              
+              <h2 className="text-5xl md:text-7xl font-black text-white leading-[0.9] tracking-tighter">
+                READY TO <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-white to-indigo-400">
+                  INNOVATE?
+                </span>
+              </h2>
+              
+              <p className="text-slate-400 text-lg md:text-xl max-w-lg leading-relaxed font-medium">
+                Let's fuse AI intelligence with premium design to build something extraordinary.
+              </p>
             </div>
             
-            <h2 className="text-4xl md:text-6xl font-bold text-white leading-tight">
-              Let's build <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-sky-200 to-sky-400">
-                something great together
-              </span>
-            </h2>
-            
-            <p className="text-slate-400 text-base md:text-lg max-w-md leading-relaxed">
-              Ready to pioneer the next generation of AI-driven interfaces? Let's collaborate and bring your vision to life.
-            </p>
-            
-            <div className="flex flex-wrap gap-4 pt-2">
+            <div className="flex flex-wrap gap-6 pt-4">
               <motion.a
                 href="mailto:ry2702763@gmail.com"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-3.5 bg-sky-500 text-[#020308] font-bold rounded-xl transition-all duration-300 shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 uppercase tracking-wider text-xs"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="group relative px-10 py-4 bg-white text-[#020308] font-black rounded-2xl transition-all duration-300 overflow-hidden"
               >
-                Get in Touch
+                <div className="absolute inset-0 bg-sky-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                <span className="relative z-10 uppercase tracking-widest text-sm">Start a Project</span>
               </motion.a>
               
               <motion.button
                 onClick={scrollToTop}
-                whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-3.5 bg-white/5 text-white font-bold rounded-xl border border-white/10 transition-all duration-300 uppercase tracking-wider text-xs"
+                whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.08)" }}
+                whileTap={{ scale: 0.95 }}
+                className="px-10 py-4 bg-white/5 text-white font-black rounded-2xl border border-white/10 transition-all duration-300 uppercase tracking-widest text-sm backdrop-blur-sm"
               >
                 Back to Top
               </motion.button>
             </div>
           </motion.div>
-        </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-12 lg:justify-items-end">
-            <div className="space-y-6">
-              <h3 className="text-xs uppercase tracking-[0.4em] text-slate-500 font-bold">Navigation</h3>
-              <ul className="space-y-4 text-sm">
+          {/* Links Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-12 lg:pl-12">
+            <div className="space-y-8">
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black">Explore</h3>
+              <ul className="space-y-5">
                 {[
                   { name: "Home", href: "#" },
                   { name: "About", href: "#about" },
                   { name: "Projects", href: "#projects-section" },
-                  { name: "Tech Stack", href: "#stack" },
+                  { name: "Stack", href: "#stack" },
                 ].map((link) => (
                   <li key={link.name}>
                     <a
                       href={link.href}
-                      className="text-slate-400 hover:text-sky-400 transition-all duration-300 flex items-center group"
+                      className="text-slate-400 hover:text-white transition-all duration-300 text-sm font-bold flex items-center group"
                     >
-                      <span className="w-0 group-hover:w-4 h-px bg-sky-500 mr-0 group-hover:mr-2 transition-all duration-300" />
+                      <span className="w-0 group-hover:w-3 h-px bg-sky-500 mr-0 group-hover:mr-3 transition-all duration-300" />
                       {link.name}
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="space-y-6">
-              <h3 className="text-xs uppercase tracking-[0.4em] text-slate-500 font-bold">Socials</h3>
-              <ul className="space-y-4 text-sm">
+
+            <div className="space-y-8">
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black">Socials</h3>
+              <ul className="space-y-5">
                 {[
-                  {
-                    name: "GitHub",
-                    href: "https://github.com/rahulydv-python",
-                    icon: (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    name: "LinkedIn",
-                    href: "https://www.linkedin.com/in/rahul-yadav-194969327",
-                    icon: (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                      </svg>
-                    ),
-                  },
+                  { name: "GitHub", href: "https://github.com/rahulydv-python" },
+                  { name: "LinkedIn", href: "https://www.linkedin.com/in/rahul-yadav-194969327" },
                 ].map((social) => (
                   <li key={social.name}>
                     <a
                       href={social.href}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-slate-400 hover:text-sky-400 transition-all duration-300 flex items-center gap-3 group"
+                      className="text-slate-400 hover:text-sky-400 transition-all duration-300 text-sm font-bold flex items-center gap-2 group"
                     >
-                      <span className="p-2 bg-white/5 rounded-lg group-hover:bg-sky-500/10 group-hover:text-sky-400 transition-all duration-300">
-                        {social.icon}
-                      </span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-white/10 group-hover:bg-sky-500 transition-all duration-300" />
                       {social.name}
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="space-y-6 col-span-2 md:col-span-1">
-              <h3 className="text-xs uppercase tracking-[0.4em] text-slate-500 font-bold">Location</h3>
-              <div className="flex items-center gap-3 text-slate-400 group">
-                <div className="p-2 bg-white/5 rounded-lg group-hover:bg-sky-500/10 group-hover:text-sky-400 transition-all duration-300">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <p className="text-sm">Kathmandu, Nepal</p>
+
+            <div className="space-y-8 col-span-2 md:col-span-1">
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black">Office</h3>
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-white">Kathmandu</p>
+                <p className="text-xs text-slate-500 font-medium leading-relaxed uppercase tracking-wider">
+                  Nepal <br />
+                  GMT +5:45
+                </p>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-xs text-slate-500 font-medium tracking-widest">
-            © {currentYear} RAHUL YADAV. ALL RIGHTS RESERVED.
-          </p>
-          <div className="flex items-center gap-8 text-[10px] uppercase tracking-[0.4em] text-slate-600">
-            <span>AI Engineer</span>
-            <span className="h-1 w-1 bg-sky-500/50 rounded-full" />
-            <span>UI/UX Designer</span>
-          </div>
+      {/* Footer Bottom */}
+      <div className="max-w-[90rem] mx-auto w-full pt-12 mt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+        <div className="flex flex-col md:flex-row items-center gap-8 text-[9px] uppercase tracking-[0.4em] text-slate-600 font-bold">
+          <p>© {currentYear} RAHUL YADAV</p>
+          <span className="hidden md:block h-1 w-1 bg-white/10 rounded-full" />
+          <p>Portfolio v2.0</p>
         </div>
+        
+        <div className="flex items-center gap-12 text-[9px] uppercase tracking-[0.5em] text-slate-500 font-black">
+          <span className="hover:text-white transition-colors cursor-default">AI ENGINEER</span>
+          <span className="hover:text-white transition-colors cursor-default">UI/UX DESIGNER</span>
+        </div>
+      </div>
     </footer>
   );
 }
@@ -2670,7 +2661,7 @@ function AppHeroSection() {
             <img
               src="/hero%20section/hero%20image.png.png"
               alt="Hero Profile"
-              className="hero-image-mobile-img w-full h-full object-cover object-bottom scale-110 md:w-auto md:h-[125vh] md:object-contain md:scale-150 md:origin-bottom md:relative md:z-50 pointer-events-none filter drop-shadow-[0_0_30px_rgba(56,189,248,0.2)]"
+              className="hero-image-mobile-img w-full h-full object-cover object-bottom scale-110 md:w-auto md:h-[125vh] md:object-contain md:scale-150 md:origin-bottom md:relative md:z-50 pointer-events-none filter drop-shadow-[0_0_30px_rgba(56,189,248,0.2)] will-change-transform"
             />
           </motion.div>
         </div>
