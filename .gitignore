@@ -1,0 +1,5 @@
+# Workspace Git Ignore Rules
+hero image/node_modules/
+hero image/dist/
+hero image/.vite/
+.DS_Store
